@@ -12,6 +12,12 @@ Contents:
    :maxdepth: 2
 
 
+Source documentation
+==================
+.. toctree::
+   :maxdepth: 4
+
+   pyelectro
 
 Indices and tables
 ==================
