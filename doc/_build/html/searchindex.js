@@ -1,0 +1,1 @@
+Search.setIndex({objects:{},terms:{analysi:[0,1,2],index:0,search:0,sourc:0,welcom:0,modul:[0,1,2],indic:0,content:0,packag:[0,1,2],pyelectro:[0,1,2],tabl:0,document:0,page:0},objtypes:{},titles:["Welcome to pyelectro&#8217;s documentation!","pyelectro","pyelectro Package"],objnames:{},filenames:["index","modules","pyelectro"]})
