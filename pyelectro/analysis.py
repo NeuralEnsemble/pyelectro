@@ -725,6 +725,18 @@ class TraceAnalysis(object):
     :param start_analysis: time in v,t where analysis is to start
     :param end_analysis: time in v,t where analysis is to end
     """
+
+    def __init__(self,v,t,start_analysis=0,end_analysis=None):
+
+        self.v=v
+        self.t=t
+        
+        start_index=self.__nearest_index(self.t,start_analysis)
+        end_index=self.__nearest_index(self.t,end_analysis)
+        
+        if end_analysis!=None:            
+            self.v=v[start_index:end_index]
+            self.t=t[start_index:end_index]
     
     def __nearest_index(self,
 			array,
@@ -737,18 +749,6 @@ class TraceAnalysis(object):
         index=np.nonzero(differences==min_difference)[0][0]
         return index
         
-    def __init__(self,v,t,start_analysis=0,end_analysis=None):
-
-        self.v=v
-        self.t=t
-        
-        start_index=self.__nearest_index(self.t,start_analysis)
-        end_index=self.__nearest_index(self.t,end_analysis)
-        
-        if end_analysis!=None:            
-            self.v=v[start_index:end_index]
-            self.t=t[start_index:end_index]
-            
     def plot_trace(self,
 		   save_fig=False,
 		   trace_name='voltage_trace.png',
