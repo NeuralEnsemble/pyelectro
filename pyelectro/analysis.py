@@ -728,8 +728,11 @@ class TraceAnalysis(object):
 
     def __init__(self,v,t,start_analysis=0,end_analysis=None):
 
-        self.v=v
-        self.t=t
+        self.v = np.array(v)
+        self.t = np.array(t)
+
+        if end_analysis is None:
+            end_analysis = t[-1]
         
         start_index=self.__nearest_index(self.t,start_analysis)
         end_index=self.__nearest_index(self.t,end_analysis)
