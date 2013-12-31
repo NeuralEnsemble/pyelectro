@@ -400,6 +400,16 @@ def spike_covar(t):
     covar=scipy.stats.variation(interspike_times)
     return covar
 
+def inflexion_spike_detector(v,t):
+    """
+    Computes spike start and stop times based on extent of
+    voltage deflection.
+    """
+    #TODO:complete this function
+    #compute the discrete derivative of the voltage trace
+    derivatives = np.diff(v)
+    pass
+
 def elburg_bursting(spike_times):
     """ bursting measure B as described by Elburg & Ooyen 2004
 
@@ -763,6 +773,9 @@ class TraceAnalysis(object):
         import matplotlib.pyplot as plt
         
         plt.plot(self.t,self.v)
+        plt.xlabel('Time (ms)')
+        plt.ylabel('Votage(mV)')
+        
         if save_fig:
             plt.savefig(trace_name)
         
@@ -827,7 +840,8 @@ class TraceAnalysis(object):
 class IClampAnalysis(TraceAnalysis):
     """Analysis class for data from whole cell current injection experiments
 
-    This is designed to work with simulations of spiking cells.
+    This is designed to work with simulations of spiking cells or
+    current clamp experimental data.
 
     :param v: time-dependent variable (usually voltage)
     :param t: time-vector
@@ -881,6 +895,27 @@ class IClampAnalysis(TraceAnalysis):
             self.analysable_data=False
         else:
             self.analysable_data=True
+
+    def plot_results(self):
+        """
+        Method represents the results visually.
+        """
+
+        import matplotlib.pyplot as plt
+        
+        minima_times = self.max_min_dictionary['minima_times']
+        maxima_times = self.max_min_dictionary['maxima_times']
+
+        for time in minima_times:
+            plt.axvline(x=time)
+        for time in maxima_times:
+            plt.axvline(x=time,color='r')
+
+        plt.xlabel('Time (ms)')
+        plt.ylabel('Voltage (mV)')
+
+        plt.plot(self.t,self.v)
+        plt.show()
 
     def analyse(self):
         """If data is analysable analyses and puts all results into a dict"""    
