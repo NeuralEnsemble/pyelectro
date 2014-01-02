@@ -255,6 +255,8 @@ def y_from_x(y,x,y_to_find):
     
     """
 
+    #TODO:should have the ability to return indices, this should be a flag
+
     from scipy import interpolate
 
     yreduced = np.array(y) - y_to_find
@@ -400,15 +402,42 @@ def spike_covar(t):
     covar=scipy.stats.variation(interspike_times)
     return covar
 
-def inflexion_spike_detector(v,t):
+def inflexion_spike_detector(v,t,threshold=0.1):
     """
     Computes spike start and stop times based on extent of
     voltage deflection.
+
+    This function requires some familiarity with Python to understand,
+    it 
+
+    :return list of tuples with start and end indices of every AP
     """
-    #TODO:complete this function
-    #compute the discrete derivative of the voltage trace
-    derivatives = np.diff(v)
-    pass
+
+    #TODO:needs to return begining and end times and indices, indices should be a flag
+
+    v = smooth(v)
+    from matplotlib import pyplot as plt
+
+    voltage_derivative = np.diff(v)
+    voltage_derivative_above_threshold = np.where(voltage_derivative>threshold)
+
+    diff_te = np.diff(voltage_derivative_above_threshold)
+    initial_deflection_indices = np.where(diff_te>1.0)[1]
+
+    ap_initiation_indices = [voltage_derivative_above_threshold[0][i+1] for i in initial_deflection_indices]
+    ap_initiation_indices = np.append(ap_initiation_indices,voltage_derivative_above_threshold[0][0])
+    ap_initiation_times = t[ap_initiation_indices]
+    print(ap_initiation_times)
+    assert(ap_initiation_indices[0] == 6646) #quick assertion, will find something more general later
+
+#    #now find the corresponding other side of the AP:
+#    for 
+#    print (y_from_x(v,t,-30)
+#
+    plt.plot(t,v)
+    plt.show()
+
+##    return threshold_exceeded
 
 def elburg_bursting(spike_times):
     """ bursting measure B as described by Elburg & Ooyen 2004
