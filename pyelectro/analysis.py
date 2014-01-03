@@ -402,18 +402,16 @@ def spike_covar(t):
     covar=scipy.stats.variation(interspike_times)
     return covar
 
-def inflexion_spike_detector(v,t,threshold=0.1):
+def inflexion_spike_detector(v,t,threshold=0.1,indices=False):
     """
     Computes spike start and stop times based on extent of
     voltage deflection.
 
-    This function requires some familiarity with Python to understand,
-    it 
+    This function requires some familiarity with Python to understand.
 
+    :param indices: whether to return tuples of indices for each spike or times
     :return list of tuples with start and end indices of every AP
     """
-
-    #TODO:needs to return begining and end times and indices, indices should be a flag
 
     v = smooth(v)
     from matplotlib import pyplot as plt
@@ -427,17 +425,68 @@ def inflexion_spike_detector(v,t,threshold=0.1):
     ap_initiation_indices = [voltage_derivative_above_threshold[0][i+1] for i in initial_deflection_indices]
     ap_initiation_indices = np.append(ap_initiation_indices,voltage_derivative_above_threshold[0][0])
     ap_initiation_times = t[ap_initiation_indices]
-    print(ap_initiation_times)
-    assert(ap_initiation_indices[0] == 6646) #quick assertion, will find something more general later
 
-#    #now find the corresponding other side of the AP:
-#    for 
-#    print (y_from_x(v,t,-30)
-#
-    plt.plot(t,v)
-    plt.show()
+    nearest_index = lambda value,arr : np.abs(arr - value).argmin()
 
-##    return threshold_exceeded
+    ap_indices = []
+    ap_times = []
+    
+    for ap_initiation_index in ap_initiation_indices:
+        
+        ap_start_time = t[ap_initiation_index]
+        ap_start_voltage = v[ap_initiation_index]
+
+        corresponding_times = y_from_x(v,t,ap_start_voltage)
+
+        ap_end_time = corresponding_times[nearest_index(ap_start_time,corresponding_times) + 1]
+        ap_end_index = nearest_index(ap_end_time,t)
+
+        ap_times.append((ap_start_time,ap_end_time))
+        ap_indices.append((ap_initiation_index,ap_end_index))
+
+    if indices:
+        return_value = ap_indices
+    else:
+        return_value = ap_times
+
+    return return_value
+
+
+def ap_integrals(v,t):
+    """
+    TODO:explain this fn
+    """
+    from matplotlib import pyplot as plt
+    from scipy.integrate import simps
+    
+    ap_indices = inflexion_spike_detector(v,t,indices=True)
+
+    integrals = []
+    
+    for ap_index_tuple in ap_indices:
+        ap = v[ap_index_tuple[0]:ap_index_tuple[1]]
+        plt.plot(ap)
+        plt.show()
+        ap_zeroed = ap - ap.min()
+
+        #assume constant timestep:
+        dt = t[1] - t[0]
+        
+        integral = simps(ap_zeroed,dx=dt)
+        integrals.append(integrals)
+        
+    return np.array(integrals)
+
+def broadening_index(v,t):
+    """
+    TODO:explain this fn
+    """
+    integrals = ap_integrals(v,t)
+    integral_0 = integrals[0]
+    mean_remaining_integrals = np.mean(integrals[1:])
+    bi = integral_0/mean_remaining_integrals
+    return bi
+    
 
 def elburg_bursting(spike_times):
     """ bursting measure B as described by Elburg & Ooyen 2004
