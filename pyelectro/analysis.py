@@ -255,6 +255,8 @@ def y_from_x(y,x,y_to_find):
     
     """
 
+    #TODO:should have the ability to return indices, this should be a flag
+
     from scipy import interpolate
 
     yreduced = np.array(y) - y_to_find
@@ -399,6 +401,43 @@ def spike_covar(t):
     interspike_times=np.diff(t)
     covar=scipy.stats.variation(interspike_times)
     return covar
+
+def inflexion_spike_detector(v,t,threshold=0.1):
+    """
+    Computes spike start and stop times based on extent of
+    voltage deflection.
+
+    This function requires some familiarity with Python to understand,
+    it 
+
+    :return list of tuples with start and end indices of every AP
+    """
+
+    #TODO:needs to return begining and end times and indices, indices should be a flag
+
+    v = smooth(v)
+    from matplotlib import pyplot as plt
+
+    voltage_derivative = np.diff(v)
+    voltage_derivative_above_threshold = np.where(voltage_derivative>threshold)
+
+    diff_te = np.diff(voltage_derivative_above_threshold)
+    initial_deflection_indices = np.where(diff_te>1.0)[1]
+
+    ap_initiation_indices = [voltage_derivative_above_threshold[0][i+1] for i in initial_deflection_indices]
+    ap_initiation_indices = np.append(ap_initiation_indices,voltage_derivative_above_threshold[0][0])
+    ap_initiation_times = t[ap_initiation_indices]
+    print(ap_initiation_times)
+    assert(ap_initiation_indices[0] == 6646) #quick assertion, will find something more general later
+
+#    #now find the corresponding other side of the AP:
+#    for 
+#    print (y_from_x(v,t,-30)
+#
+    plt.plot(t,v)
+    plt.show()
+
+##    return threshold_exceeded
 
 def elburg_bursting(spike_times):
     """ bursting measure B as described by Elburg & Ooyen 2004
@@ -728,8 +767,8 @@ class TraceAnalysis(object):
 
     def __init__(self,v,t,start_analysis=0,end_analysis=None):
 
-        self.v=np.array(v)
-        self.t=np.array(t)
+        self.v = np.array(v)
+        self.t = np.array(t)
 
         if end_analysis is None:
             end_analysis = t[-1]
@@ -763,6 +802,9 @@ class TraceAnalysis(object):
         import matplotlib.pyplot as plt
         
         plt.plot(self.t,self.v)
+        plt.xlabel('Time (ms)')
+        plt.ylabel('Votage(mV)')
+        
         if save_fig:
             plt.savefig(trace_name)
         
@@ -827,7 +869,8 @@ class TraceAnalysis(object):
 class IClampAnalysis(TraceAnalysis):
     """Analysis class for data from whole cell current injection experiments
 
-    This is designed to work with simulations of spiking cells.
+    This is designed to work with simulations of spiking cells or
+    current clamp experimental data.
 
     :param v: time-dependent variable (usually voltage)
     :param t: time-vector
@@ -881,6 +924,27 @@ class IClampAnalysis(TraceAnalysis):
             self.analysable_data=False
         else:
             self.analysable_data=True
+
+    def plot_results(self):
+        """
+        Method represents the results visually.
+        """
+
+        import matplotlib.pyplot as plt
+        
+        minima_times = self.max_min_dictionary['minima_times']
+        maxima_times = self.max_min_dictionary['maxima_times']
+
+        for time in minima_times:
+            plt.axvline(x=time)
+        for time in maxima_times:
+            plt.axvline(x=time,color='r')
+
+        plt.xlabel('Time (ms)')
+        plt.ylabel('Voltage (mV)')
+
+        plt.plot(self.t,self.v)
+        plt.show()
 
     def analyse(self):
         """If data is analysable analyses and puts all results into a dict"""    
