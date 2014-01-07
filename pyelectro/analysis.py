@@ -451,9 +451,23 @@ def inflexion_spike_detector(v,t,threshold=0.1,indices=False):
         ap_start_time = t[ap_initiation_index]
         ap_start_voltage = v[ap_initiation_index]
 
-        corresponding_times = y_from_x(v,t,ap_start_voltage)
+        #expected maximum number of data points in an AP
+        max_data_points = 2000
 
-        ap_end_time = corresponding_times[nearest_index(ap_start_time,corresponding_times) + 1]
+        corresponding_times = y_from_x(v[ap_initiation_index:ap_initiation_index+max_data_points],
+                                       t[ap_initiation_index:ap_initiation_index+max_data_points],
+                                       ap_start_voltage)
+
+        logger.debug('Corresponding times: %s' %corresponding_times)
+
+        #there may be a better way to do this than by using exceptions:
+        try:
+            ap_end_time = corresponding_times[nearest_index(ap_start_time,corresponding_times) + 1]
+        except:
+            logger.debug('AP end time not found, AP start time: %f' %ap_start_time)
+            ap_end_time = ap_start_time + 0.002 # this completely
+            logging.critical('the voltage deflection due to the current injection is extremely rapid TODO: find a clever way around this problem, perhaps use a threshold if the AP deflection is too fast early on. One solution is to use an AP deflection within a certain range rather than a simple threshold')
+
         ap_end_index = nearest_index(ap_end_time,t)
 
         ap_times.append((ap_start_time,ap_end_time))
@@ -1043,9 +1057,19 @@ class IClampAnalysis(TraceAnalysis):
             analysis_results['interspike_time_covar'] = spike_covar(max_min_dictionary['maxima_times'])
             analysis_results['first_spike_time'] = max_min_dictionary['maxima_times'][0]
             trough_phases=minima_phases(self.t,self.v,delta = self.delta)
-            analysis_results['trough_phase_adaptation'] = exp_fit(trough_phases[0],trough_phases[1])
+            
+            try:
+                analysis_results['trough_phase_adaptation'] = exp_fit(trough_phases[0],trough_phases[1])
+            except:
+                logging.warning('trough_phase_adaptation raising an error')
+
             spike_width_list = spike_widths(self.v,self.t,self.baseline,self.delta)
-            analysis_results['spike_width_adaptation'] = exp_fit(spike_width_list[0],spike_width_list[1])
+
+            try:
+                analysis_results['spike_width_adaptation'] = exp_fit(spike_width_list[0],spike_width_list[1])
+            except:
+                logging.warning('spike_width_adaptation raising an exception, exp_fit looks problematic')
+
             spike_frequency_list = spike_frequencies(max_min_dictionary['maxima_times'])
             analysis_results['peak_decay_exponent'] = three_spike_adaptation(max_min_dictionary['maxima_times'],max_min_dictionary['maxima_values'])
             analysis_results['trough_decay_exponent'] = three_spike_adaptation(max_min_dictionary['minima_times'],max_min_dictionary['minima_values'])
