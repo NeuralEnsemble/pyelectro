@@ -286,8 +286,6 @@ def single_spike_width(y,t,baseline):
     
     :return: width of spike at height defined by baseline
 
-    :think about - set default baseline to none and calculate half-width
-    
     """
 
     logger.debug('Baseline: %f' %baseline)
@@ -332,7 +330,7 @@ def single_spike_width(y,t,baseline):
         width = interpolated_right_time - interpolated_left_time
     
     except:
-        logger.warning('Single spike width algorithm failure, setting to 0')
+        logger.warning('Single spike width algorithm failure - setting to 0')
         width = 0.0
     
     return width
@@ -1072,7 +1070,9 @@ class IClampAnalysis(TraceAnalysis):
 
             spike_frequency_list = spike_frequencies(max_min_dictionary['maxima_times'])
             analysis_results['peak_decay_exponent'] = three_spike_adaptation(max_min_dictionary['maxima_times'],max_min_dictionary['maxima_values'])
+
             analysis_results['trough_decay_exponent'] = three_spike_adaptation(max_min_dictionary['minima_times'],max_min_dictionary['minima_values'])
+
             analysis_results['spike_frequency_adaptation'] = exp_fit(spike_frequency_list[0],spike_frequency_list[1])
             analysis_results['spike_broadening'] = spike_broadening(spike_width_list[1])
 	    analysis_results['peak_linear_gradient'] = linear_fit(max_min_dictionary["maxima_times"],max_min_dictionary["maxima_values"])
