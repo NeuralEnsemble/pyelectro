@@ -7,12 +7,11 @@ AUTHOR: Mike Vella vellamike@gmail.com
 """
 
 from matplotlib import pyplot as plt
+from scipy.integrate import simps
 import scipy.stats
 import numpy as np
 import math
 import logging
-
-logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +61,6 @@ def smooth(x,window_len=11,window='hanning'):
         raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
 
     s=np.r_[x[window_len-1:0:-1],x,x[-1:-window_len:-1]]
-    #print(len(s))
     if window == 'flat': #moving average
         w=np.ones(window_len,'d')
     else:
@@ -292,10 +290,18 @@ def single_spike_width(y,t,baseline):
     :think about - set default baseline to none and calculate half-width
     
     """
+
+    logger.debug('Baseline: %f' %baseline)
+
     try:
-        
-        value = max(y)
-        location = y.index(value)
+        y = np.array(y)
+        t = np.array(t)
+    
+        value = np.max(y)
+        location = np.argmax(y)
+    
+        logger.debug('Max voltage: %f' %value)
+        logger.debug('Index of max: %f' %location)
         
         #moving left:
         while value > baseline:
@@ -310,8 +316,8 @@ def single_spike_width(y,t,baseline):
                 raise MathsError('Baseline does not intersect spike')
                 
         #now go right
-        value = max(y)
-        location = y.index(value)
+        value = np.max(y)
+        location = np.argmax(y)
         
         while value > baseline :
             location += 1
@@ -323,11 +329,12 @@ def single_spike_width(y,t,baseline):
             
             if location > len(y) - 1:
                 raise MathsError('Baseline does not intersect spike')
-
+    
         width = interpolated_right_time - interpolated_left_time
     
     except:
-        width = 0
+        logger.warning('Single spike width algorithm failure, setting to 0')
+        width = 0.0
     
     return width
 
@@ -377,7 +384,9 @@ def spike_widths(y,t,baseline=0,delta=0):
         
         try:
             width=single_spike_width(spike_shape,spike_t,baseline)
+            logger.debug('Spike width: %f' %width)
         except:
+            logger.warning('Spike width set to 0, this indicates a problem')
             width=0
         
         spike_widths.append(width)
@@ -464,29 +473,23 @@ def ap_integrals(v,t):
     TODO:explain this fn
     """
 
-    from scipy.integrate import simps
 
-    logger.info('Working out AP indices')
+
+    logger.info('Estimating AP indices')
     ap_indices = inflexion_spike_detector(v,t,indices=True)
 
     integrals = []
     
     for ap_index_tuple in ap_indices:
         ap = v[ap_index_tuple[0]:ap_index_tuple[1]]
-        plt.plot(ap)
-        plt.show()
         ap_zeroed = ap - ap.min()
 
         #assume constant timestep:
         dt = t[1] - t[0]
-        logger.info('Working out integral')
         integral = simps(ap_zeroed,dx=dt)
         integrals.append(integral)
-        logger.info('Integral worked out')
+        logger.debug('AP integral calculated: %f' %integral)
 
-    print('integrals as follows:')
-    print(integrals)
-    
     return np.array(integrals)
 
 def broadening_index(v,t):
@@ -495,9 +498,9 @@ def broadening_index(v,t):
     TODO:add logging to this module
     """
 
-    logger.info('working out integrals:')
+    logger.info('Estimating integral values of spike train')
     integrals = ap_integrals(v,t)
-    logger.info('integrals worked out')
+    logger.info('AP integrals calcuated')
     integral_0 = integrals[0]
     mean_remaining_integrals = np.mean(integrals[1:])
     bi = integral_0/mean_remaining_integrals
@@ -724,9 +727,18 @@ def spike_broadening(spike_width_list):
     the mean value of the following APs.
     """
 
-    first_spike=spike_width_list[0]
-    mean_following_spikes=np.mean(spike_width_list[1:])
-    broadening=first_spike/mean_following_spikes
+    first_spike = spike_width_list[0]
+    
+    if first_spike < 1e-6:
+        logger.warning('First spike width <1e-6s, this indicates a problem')
+
+    mean_following_spikes = np.mean(spike_width_list[1:])
+    broadening = first_spike/mean_following_spikes
+    
+
+    logger.debug('Spike widths: %s' %spike_width_list)
+    logger.debug('First spike: %f, Mean of following spikes: %f' %(first_spike,mean_following_spikes))
+    logger.debug('Spike broadening estimate: %f' %broadening)
 
     return broadening
 
@@ -1028,7 +1040,7 @@ class IClampAnalysis(TraceAnalysis):
             analysis_results['first_spike_time'] = max_min_dictionary['maxima_times'][0]
             trough_phases=minima_phases(self.t,self.v,delta = self.delta)
             analysis_results['trough_phase_adaptation'] = exp_fit(trough_phases[0],trough_phases[1])
-            spike_width_list=spike_widths(self.v,self.t,self.baseline,self.delta)
+            spike_width_list = spike_widths(self.v,self.t,self.baseline,self.delta)
             analysis_results['spike_width_adaptation'] = exp_fit(spike_width_list[0],spike_width_list[1])
             spike_frequency_list = spike_frequencies(max_min_dictionary['maxima_times'])
             analysis_results['peak_decay_exponent'] = three_spike_adaptation(max_min_dictionary['maxima_times'],max_min_dictionary['maxima_values'])
@@ -1036,6 +1048,7 @@ class IClampAnalysis(TraceAnalysis):
             analysis_results['spike_frequency_adaptation'] = exp_fit(spike_frequency_list[0],spike_frequency_list[1])
             analysis_results['spike_broadening'] = spike_broadening(spike_width_list[1])
 	    analysis_results['peak_linear_gradient'] = linear_fit(max_min_dictionary["maxima_times"],max_min_dictionary["maxima_values"])
+            analysis_results['broadening_index'] = broadening_index(self.v,self.t)
 
 
             #this line here is because PPTD needs to be compared directly with experimental data:
