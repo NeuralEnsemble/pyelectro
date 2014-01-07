@@ -7,11 +7,12 @@ AUTHOR: Mike Vella vellamike@gmail.com
 """
 
 from matplotlib import pyplot as plt
-from scipy.integrate import simps
 import scipy.stats
 import numpy as np
 import math
 import logging
+from scipy import interpolate
+
 
 logger = logging.getLogger(__name__)
 
@@ -262,10 +263,8 @@ def y_from_x(y,x,y_to_find):
 
     #TODO:should have the ability to return indices, this should be a flag
 
-    from scipy import interpolate
-
     yreduced = np.array(y) - y_to_find
-    freduced = interpolate.UnivariateSpline(x, yreduced, s=3)
+    freduced = interpolate.UnivariateSpline(x, yreduced, s=None)
     
     return freduced.roots()
 
@@ -477,6 +476,7 @@ def ap_integrals(v,t):
 
     logger.info('Estimating AP indices')
     ap_indices = inflexion_spike_detector(v,t,indices=True)
+    logger.info('AP indices found')
 
     integrals = []
     
@@ -486,7 +486,8 @@ def ap_integrals(v,t):
 
         #assume constant timestep:
         dt = t[1] - t[0]
-        integral = simps(ap_zeroed,dx=dt)
+        #estimate integral using trapezoidal rule
+        integral = np.trapz(ap_zeroed,dx=dt)
         integrals.append(integral)
         logger.debug('AP integral calculated: %f' %integral)
 
@@ -499,11 +500,14 @@ def broadening_index(v,t):
     """
 
     logger.info('Estimating integral values of spike train')
+
     integrals = ap_integrals(v,t)
     logger.info('AP integrals calcuated')
     integral_0 = integrals[0]
     mean_remaining_integrals = np.mean(integrals[1:])
     bi = integral_0/mean_remaining_integrals
+
+    logger.debug('Broadening index: %f' %bi)
 
     return bi
     
