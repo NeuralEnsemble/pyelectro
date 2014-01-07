@@ -5,9 +5,16 @@ Module for mathematical analysis of voltage traces from electrophysiology.
 AUTHOR: Mike Vella vellamike@gmail.com
 
 """
+
+from matplotlib import pyplot as plt
 import scipy.stats
 import numpy as np
 import math
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
+logger = logging.getLogger(__name__)
 
 def smooth(x,window_len=11,window='hanning'):
     """Smooth the data using a window with requested size.
@@ -414,7 +421,7 @@ def inflexion_spike_detector(v,t,threshold=0.1,indices=False):
     """
 
     v = smooth(v)
-    from matplotlib import pyplot as plt
+    
 
     voltage_derivative = np.diff(v)
     voltage_derivative_above_threshold = np.where(voltage_derivative>threshold)
@@ -456,9 +463,10 @@ def ap_integrals(v,t):
     """
     TODO:explain this fn
     """
-    from matplotlib import pyplot as plt
+
     from scipy.integrate import simps
-    
+
+    logger.info('Working out AP indices')
     ap_indices = inflexion_spike_detector(v,t,indices=True)
 
     integrals = []
@@ -471,20 +479,29 @@ def ap_integrals(v,t):
 
         #assume constant timestep:
         dt = t[1] - t[0]
-        
+        logger.info('Working out integral')
         integral = simps(ap_zeroed,dx=dt)
-        integrals.append(integrals)
-        
+        integrals.append(integral)
+        logger.info('Integral worked out')
+
+    print('integrals as follows:')
+    print(integrals)
+    
     return np.array(integrals)
 
 def broadening_index(v,t):
     """
     TODO:explain this fn
+    TODO:add logging to this module
     """
+
+    logger.info('working out integrals:')
     integrals = ap_integrals(v,t)
+    logger.info('integrals worked out')
     integral_0 = integrals[0]
     mean_remaining_integrals = np.mean(integrals[1:])
     bi = integral_0/mean_remaining_integrals
+
     return bi
     
 
