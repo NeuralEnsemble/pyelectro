@@ -16,6 +16,19 @@ from scipy import interpolate
 
 logger = logging.getLogger(__name__)
 
+def voltage_plot(t,v,title=None):
+    """
+    Plot electrophysiology recording.
+    """
+
+    plt.xlabel('Time (ms)')
+    plt.ylabel('Voltage (mV)')
+    plt.title(title)
+    plt.grid()
+    plt.plot(t,v)
+    plt.show()
+
+
 def smooth(x,window_len=11,window='hanning'):
     """Smooth the data using a window with requested size.
     
@@ -415,7 +428,7 @@ def spike_covar(t):
     covar=scipy.stats.variation(interspike_times)
     return covar
 
-def inflexion_spike_detector(v,t,threshold=0.1,indices=False):
+def inflexion_spike_detector(v,t,threshold=0.4,indices=False):
     """
     Computes spike start and stop times based on extent of
     voltage deflection.
@@ -428,7 +441,6 @@ def inflexion_spike_detector(v,t,threshold=0.1,indices=False):
 
     v = smooth(v)
     
-
     voltage_derivative = np.diff(v)
     voltage_derivative_above_threshold = np.where(voltage_derivative>threshold)
 
@@ -459,12 +471,19 @@ def inflexion_spike_detector(v,t,threshold=0.1,indices=False):
         logger.debug('Corresponding times: %s' %corresponding_times)
 
         #there may be a better way to do this than by using exceptions:
+
         try:
-            ap_end_time = corresponding_times[nearest_index(ap_start_time,corresponding_times) + 1]
+            ap_end_time = corresponding_times[nearest_index(ap_start_time,corresponding_times)]
+#            voltage_plot(t,v,title='Spike Detection OK')
+#            voltage_plot(t[:-1],np.diff(v)*10,title='Spike detection OK')
+
         except:
-            logger.debug('AP end time not found, AP start time: %f' %ap_start_time)
-            ap_end_time = ap_start_time + 0.002 # this completely
-            logging.critical('the voltage deflection due to the current injection is extremely rapid TODO: find a clever way around this problem, perhaps use a threshold if the AP deflection is too fast early on. One solution is to use an AP deflection within a certain range rather than a simple threshold')
+            logger.critical('AP end time not found, AP start time: %f' %ap_start_time)
+            ap_end_time = ap_start_time + 0.002 # TODO: this fix is nonsense
+            logging.critical('Corresponding times: %s' %corresponding_times)
+            logging.critical('AP start time: %f' %ap_start_time)
+            voltage_plot(t,v,title='Error during spike detection')
+            voltage_plot(t[:-1],np.diff(v)*10)
 
         ap_end_index = nearest_index(ap_end_time,t)
 
@@ -1015,9 +1034,15 @@ class IClampAnalysis(TraceAnalysis):
         max_peak_no=self.max_min_dictionary['maxima_number']
         
         if max_peak_no<3:
-            self.analysable_data=False
+            self.analysable_data = False
+        elif max(v) > 100.0:
+            self.analysable_data = False
+        elif min(v) > -20.0:
+            self.analysable_data = False
+        elif max(v) < 10.0:
+            self.analysable_data = False
         else:
-            self.analysable_data=True
+            self.analysable_data = True
 
     def plot_results(self):
         """
@@ -1076,6 +1101,7 @@ class IClampAnalysis(TraceAnalysis):
             analysis_results['spike_frequency_adaptation'] = exp_fit(spike_frequency_list[0],spike_frequency_list[1])
             analysis_results['spike_broadening'] = spike_broadening(spike_width_list[1])
 	    analysis_results['peak_linear_gradient'] = linear_fit(max_min_dictionary["maxima_times"],max_min_dictionary["maxima_values"])
+            
             analysis_results['broadening_index'] = broadening_index(self.v,self.t)
 
 
@@ -1093,4 +1119,4 @@ class IClampAnalysis(TraceAnalysis):
             self.analysis_results=analysis_results
 
         else:
-            print 'data not suitable for analysis,<3 APs'
+            logger.info('Data not suitable for analysis')
