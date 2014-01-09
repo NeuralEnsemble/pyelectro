@@ -140,10 +140,12 @@ def exp_fit(t, y):
     return K
 
 
-def max_min(a,t,delta=0,peak_threshold=0):
+def max_min(a,t,delta=0,peak_threshold=0.0):
     """
     Find the maxima and minima of a voltage trace.
     
+    :note This method does not appear to be very robust when comparing to experimental data
+
     :param a: time-dependent variable (usually voltage)
     :param t: time-vector
     :param delta: the value by which a peak or trough has to exceed its
@@ -344,6 +346,8 @@ def single_spike_width(y,t,baseline):
     
     except:
         logger.warning('Single spike width algorithm failure - setting to 0')
+#        plt.plot(t,y)
+#        plt.show()
         width = 0.0
     
     return width
@@ -368,6 +372,7 @@ def spike_widths(y,t,baseline=0,delta=0):
     
     #first get the max and min data:
     max_min_dictionary=max_min(y,t,delta)
+    logger.debug('max_min_dictionary: %s' %max_min_dictionary)
     
     max_num=max_min_dictionary['maxima_number']
     maxima_locations=max_min_dictionary['maxima_locations']
@@ -428,7 +433,7 @@ def spike_covar(t):
     covar=scipy.stats.variation(interspike_times)
     return covar
 
-def inflexion_spike_detector(v,t,threshold=0.4,indices=False):
+def inflexion_spike_detector(v,t,threshold=0.4,indices=False,max_data_points=2000):
     """
     Computes spike start and stop times based on extent of
     voltage deflection.
@@ -436,20 +441,37 @@ def inflexion_spike_detector(v,t,threshold=0.4,indices=False):
     This function requires some familiarity with Python to understand.
 
     :param indices: whether to return tuples of indices for each spike or times
+
     :return list of tuples with start and end indices of every AP
     """
 
     v = smooth(v)
     
     voltage_derivative = np.diff(v)
+
     voltage_derivative_above_threshold = np.where(voltage_derivative>threshold)
 
+    logging.debug('Indices where voltage derivative exceeds\
+                  threshold: %s' %voltage_derivative_above_threshold)
+
+    #this method actually sucks, we want the indices where a gap > 1,
+    #use a reduce?
     diff_te = np.diff(voltage_derivative_above_threshold)
     initial_deflection_indices = np.where(diff_te>1.0)[1]
-
     ap_initiation_indices = [voltage_derivative_above_threshold[0][i+1] for i in initial_deflection_indices]
-    ap_initiation_indices = np.append(ap_initiation_indices,voltage_derivative_above_threshold[0][0])
+
+    ap_initiation_indices = np.append(voltage_derivative_above_threshold[0][0],ap_initiation_indices)
+
+    logging.debug('Indices where initial deflection occurs: %s'\
+                  %ap_initiation_indices)
+
     ap_initiation_times = t[ap_initiation_indices]
+
+    logging.debug('Times where initial deflection occurs: %s'\
+                  %ap_initiation_times)
+
+    #we now have the times and indices of all the AP initiations, need
+    #to find the corresponding end indices
 
     nearest_index = lambda value,arr : np.abs(arr - value).argmin()
 
@@ -461,34 +483,36 @@ def inflexion_spike_detector(v,t,threshold=0.4,indices=False):
         ap_start_time = t[ap_initiation_index]
         ap_start_voltage = v[ap_initiation_index]
 
-        #expected maximum number of data points in an AP
-        max_data_points = 2000
+        offset = 10 # offset prevents corresponding time from being
 
-        corresponding_times = y_from_x(v[ap_initiation_index:ap_initiation_index+max_data_points],
-                                       t[ap_initiation_index:ap_initiation_index+max_data_points],
+        v_slice = v[ap_initiation_index + offset:ap_initiation_index+max_data_points]
+        t_slice = t[ap_initiation_index+ offset:ap_initiation_index+max_data_points]
+
+        corresponding_times = y_from_x(v_slice,
+                                       t_slice,
                                        ap_start_voltage)
 
         logger.debug('Corresponding times: %s' %corresponding_times)
 
-        #there may be a better way to do this than by using exceptions:
-
         try:
             ap_end_time = corresponding_times[nearest_index(ap_start_time,corresponding_times)]
-#            voltage_plot(t,v,title='Spike Detection OK')
-#            voltage_plot(t[:-1],np.diff(v)*10,title='Spike detection OK')
 
         except:
             logger.critical('AP end time not found, AP start time: %f' %ap_start_time)
             ap_end_time = ap_start_time + 0.002 # TODO: this fix is nonsense
-            logging.critical('Corresponding times: %s' %corresponding_times)
-            logging.critical('AP start time: %f' %ap_start_time)
-            voltage_plot(t,v,title='Error during spike detection')
-            voltage_plot(t[:-1],np.diff(v)*10)
+
+            logger.critical('Corresponding times: %s' %corresponding_times)
+            logger.critical('AP start time: %f' %ap_start_time)
+
+#            voltage_plot(t,v,title='Error during spike detection')
+#            voltage_plot(t[:-1],np.diff(v)*10)
 
         ap_end_index = nearest_index(ap_end_time,t)
 
         ap_times.append((ap_start_time,ap_end_time))
         ap_indices.append((ap_initiation_index,ap_end_index))
+
+        logger.debug('Action potential start and end time: %f %f' %(ap_start_time,ap_end_time))
 
     if indices:
         return_value = ap_indices
@@ -873,7 +897,7 @@ class TraceAnalysis(object):
     Constructor for TraceAnalysis base class takes the following arguments:
        
     :param v: time-dependent variable (usually voltage)
-    :param t: time-array (1-to-1 correspondence with v-array)
+    :param t: time-array (1-to-1 correspondence with v_array)
     :param start_analysis: time in v,t where analysis is to start
     :param end_analysis: time in v,t where analysis is to end
     """
