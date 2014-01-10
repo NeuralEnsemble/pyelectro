@@ -140,6 +140,30 @@ def exp_fit(t, y):
     return K
 
 
+def window_peak_detector(v,peak_threshold = 0.5):
+    """
+    Detects peak by comparing mean of either side of
+    peak and deciding whether it exceeds some threshold.
+
+    :return: Boolean, True if a peak is detected in that window
+    """
+    
+    middle_index = len(v) // 2
+    middle_value = v[middle_index]
+
+    left_mean = np.mean(v[0:middle_index])
+    right_mean = np.mean(v[middle_index+1:])
+
+    left_elevation = middle_value - left_mean
+    right_elevation = middle_value - right_mean
+    
+    left_exceeds_threhold = left_elevation > peak_threshold
+    right_exceeds_threshold = right_elevation > peak_threshold
+
+    return left_exceeds_threhold and right_exceeds_threshold
+    
+
+
 def max_min(a,t,delta=0,peak_threshold=0.0):
     """
     Find the maxima and minima of a voltage trace.
@@ -1009,6 +1033,9 @@ class IClampAnalysis(TraceAnalysis):
     This is designed to work with simulations of spiking cells or
     current clamp experimental data.
 
+    A lot of the logic here is hardcoded to work well with Cortical Layer II/III
+    Pyramidal cells in Rats.
+
     :param v: time-dependent variable (usually voltage)
     :param t: time-vector
     :param analysis_var: dictionary containing parameters to be used
@@ -1055,19 +1082,21 @@ class IClampAnalysis(TraceAnalysis):
                                           self.delta,
                                           peak_threshold = peak_threshold)
         
-        max_peak_no=self.max_min_dictionary['maxima_number']
-        
-        if max_peak_no<3:
-            self.analysable_data = False
-        elif max(v) > 100.0:
-            self.analysable_data = False
-        elif min(v) > -20.0:
-            self.analysable_data = False
-        elif max(v) < 10.0:
-            self.analysable_data = False
+    @property
+    def analysable_data(self):
+        if self.max_min_dictionary['maxima_number'] < 3:
+            analysable = False
+        elif max(self.v) > 100.0:
+            analysable = False
+        elif min(self.v) > -20.0:
+            analysable = False
+        elif max(self.v) < 10.0:
+            analysable = False
         else:
-            self.analysable_data = True
-
+            analysable = True
+        
+        return analysable
+        
     def plot_results(self):
         """
         Method represents the results visually.
@@ -1092,9 +1121,9 @@ class IClampAnalysis(TraceAnalysis):
     def analyse(self):
         """If data is analysable analyses and puts all results into a dict"""    
         
+        analysis_results={}
         if self.analysable_data:
             max_min_dictionary=self.max_min_dictionary
-            analysis_results={}
 
             analysis_results['average_minimum'] = np.average(max_min_dictionary['minima_values'])
             analysis_results['average_maximum'] = np.average(max_min_dictionary['maxima_values'])
