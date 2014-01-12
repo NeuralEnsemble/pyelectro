@@ -12,8 +12,9 @@ import numpy as np
 import math
 import logging
 from scipy import interpolate
-
-
+import operator
+import itertools
+   
 logger = logging.getLogger(__name__)
 
 def voltage_plot(t,v,title=None):
@@ -140,13 +141,16 @@ def exp_fit(t, y):
     return K
 
 
-def window_peak_detector(v,peak_threshold = 0.5):
+def window_peak_detector(v,delta = 0.01):
     """
     Detects peak by comparing mean of either side of
     peak and deciding whether it exceeds some threshold.
 
     :return: Boolean, True if a peak is detected in that window
     """
+
+    if len(v) % 2 == 0:
+        raise Exception("Window length must be odd")
     
     middle_index = len(v) // 2
     middle_value = v[middle_index]
@@ -157,13 +161,27 @@ def window_peak_detector(v,peak_threshold = 0.5):
     left_elevation = middle_value - left_mean
     right_elevation = middle_value - right_mean
     
-    left_exceeds_threhold = left_elevation > peak_threshold
-    right_exceeds_threshold = right_elevation > peak_threshold
+    left_exceeds_threhold = left_elevation > delta
+    right_exceeds_threshold = right_elevation > delta
 
     return left_exceeds_threhold and right_exceeds_threshold
     
+def centered_slice(v, index, length=5):
+    """
+    Retruns slice of given length centred on index.
+    """
 
+    if length % 2 == 0:
+        raise Exception("Window length must be odd")
 
+    if len(v) < index + length // 2:
+        raise Exception("Index too close to edge or window too big")
+
+    start_index = index - length // 2
+    slice = v[start_index:start_index + length]
+
+    return slice
+    
 def max_min(a,t,delta=0,peak_threshold=0.0):
     """
     Find the maxima and minima of a voltage trace.
@@ -221,7 +239,7 @@ def max_min(a,t,delta=0,peak_threshold=0.0):
     else:
         minima_num=0
     
-    import operator
+
     
     values_getter=operator.itemgetter(0)
     location_getter=operator.itemgetter(1)
@@ -250,6 +268,45 @@ def max_min(a,t,delta=0,peak_threshold=0.0):
     turning_points = {'maxima_locations':maxima_locations,'minima_locations':minima_locations,'maxima_number':maxima_num,'minima_number':minima_num,'maxima_times':maxima_times,'minima_times':minima_times, 'maxima_values':maxima_values,'minima_values':minima_values}
     
     return turning_points
+
+def max_min2(v,t,delta=0.1,peak_threshold=0.0,window_length=11):
+    """
+    Uses the max_min function but then does a second pass with
+    window peak detector to discard peaks.
+
+    This is being prepared as an enhancement to the old
+    peak detector.
+    """
+
+    max_min_dict = max_min(v,t,delta=0.0,peak_threshold=peak_threshold)
+    
+    maxima_locations = max_min_dict['maxima_locations']
+
+    peak_mask = []
+    
+    for location in maxima_locations:
+        slice = centered_slice(v,location,window_length)
+        peak_flag = window_peak_detector(slice, delta=delta)
+        peak_mask.append(peak_flag)
+
+    #this anonymous function strips a list of all corresponding
+    #non-zero elements in the mask:
+    print peak_mask
+    
+    mask_filter = lambda l, mask : list(itertools.compress(l,mask))
+
+    max_min_dict.pop('maxima_number',None)
+    max_min_dict.pop('minima_number',None)    
+
+    dict_keys = max_min_dict.keys()
+    
+    for key in dict_keys:
+        max_min_dict[key] = mask_filter(max_min_dict[key],peak_mask)
+
+    max_min_dict['maxima_number'] = len(max_min_dict['maxima_locations'])
+    max_min_dict['minima_number'] = max_min_dict['maxima_number'] - 1
+
+    return max_min_dict
 
 def spike_frequencies(t):
     """
