@@ -20,3 +20,48 @@ def data_from_sweep(path):
     recording = recording[0][0][0]
     
     return recording
+
+def load_csv_data(file_path,plot=False):
+    """Extracts time and voltage data from a csv file
+    
+    Data must be in a csv and in two columns, first time and second 
+    voltage. Units should be SI (Volts and Seconds).
+
+    :param file_path: full file path to file e.g /home/mike/test.csv
+        
+    :return: two lists - time and voltage
+
+    """
+    import csv
+
+    csv_file=file(file_path,'r')
+    csv_reader=csv.reader(csv_file)
+
+    v=[]
+    t=[]
+
+    i=0
+    for row in csv_reader:
+
+        try:
+
+            t_value=float(row[0])*1000 #convert to ms
+            v_value=float(row[1])*1000 #convert to mV
+
+            t.append(t_value)
+            v.append(v_value)
+
+        except:
+            print 'row ',i,' invalid'
+
+        i+=1
+
+    if plot:
+        from matplotlib import pyplot        
+        pyplot.plot(t,v)
+        pyplot.title('Raw data')
+        pyplot.xlabel('Time (ms)')
+        pyplot.ylabel('Voltage (mV)')
+        pyplot.show()
+
+    return t,v

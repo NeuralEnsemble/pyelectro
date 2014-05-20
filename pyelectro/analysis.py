@@ -1188,7 +1188,8 @@ class IClampAnalysis(TraceAnalysis):
     def analyse(self):
         """If data is analysable analyses and puts all results into a dict"""    
         
-        analysis_results={}
+        self.analysis_results={}
+
         if self.analysable_data:
             max_min_dictionary=self.max_min_dictionary
 
