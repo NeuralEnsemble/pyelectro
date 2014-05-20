@@ -64,4 +64,4 @@ def load_csv_data(file_path,plot=False):
         pyplot.ylabel('Voltage (mV)')
         pyplot.show()
 
-    return t,v
+    return np.array(t), np.array(v)
