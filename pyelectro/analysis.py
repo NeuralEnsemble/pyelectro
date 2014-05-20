@@ -427,8 +427,6 @@ def single_spike_width(y,t,baseline):
     
     except:
         logger.warning('Single spike width algorithm failure - setting to 0')
-#        plt.plot(t,y)
-#        plt.show()
         width = 0.0
     
     return width
@@ -514,7 +512,7 @@ def spike_covar(t):
     covar=scipy.stats.variation(interspike_times)
     return covar
 
-def inflexion_spike_detector(v,t,threshold=0.4,indices=False,max_data_points=2000):
+def inflexion_spike_detector(v,t,threshold=0.4,indices=False,max_data_points=2000,voltage_threshold = -30):
     """
     Computes spike start and stop times based on extent of
     voltage deflection.
@@ -527,10 +525,17 @@ def inflexion_spike_detector(v,t,threshold=0.4,indices=False,max_data_points=200
     """
 
     v = smooth(v)
-    
+
     voltage_derivative = np.diff(v)
 
-    voltage_derivative_above_threshold = np.where(voltage_derivative>threshold)
+    voltage_above_threshold= np.where(v > voltage_threshold)
+
+    voltage_derivative_above_threshold = np.where(voltage_derivative > threshold)
+
+    voltage_derivative_above_threshold = np.intersect1d(voltage_derivative_above_threshold[0],
+                                                        voltage_above_threshold[0])
+
+    voltage_derivative_above_threshold = (np.array(voltage_derivative_above_threshold),)
 
     logging.debug('Indices where voltage derivative exceeds\
                   threshold: %s' %voltage_derivative_above_threshold)
@@ -538,7 +543,9 @@ def inflexion_spike_detector(v,t,threshold=0.4,indices=False,max_data_points=200
     #this method actually sucks, we want the indices where a gap > 1,
     #use a reduce?
     diff_te = np.diff(voltage_derivative_above_threshold)
+
     initial_deflection_indices = np.where(diff_te>1.0)[1]
+
     ap_initiation_indices = [voltage_derivative_above_threshold[0][i+1] for i in initial_deflection_indices]
 
     ap_initiation_indices = np.append(voltage_derivative_above_threshold[0][0],ap_initiation_indices)
@@ -581,6 +588,9 @@ def inflexion_spike_detector(v,t,threshold=0.4,indices=False,max_data_points=200
         except:
             logger.critical('AP end time not found, AP start time: %f' %ap_start_time)
             ap_end_time = ap_start_time + 0.002 # TODO: this fix is nonsense
+
+#            plt.plot(t,v)
+#            plt.show()
 
             logger.critical('Corresponding times: %s' %corresponding_times)
             logger.critical('AP start time: %f' %ap_start_time)
@@ -1145,7 +1155,7 @@ class IClampAnalysis(TraceAnalysis):
             analysable = False
         elif max(self.v) > 100.0:
             analysable = False
-        elif min(self.v) > -20.0:
+        elif min(self.v) > -30.0:
             analysable = False
         elif max(self.v) < 10.0:
             analysable = False
