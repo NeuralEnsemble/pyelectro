@@ -686,6 +686,10 @@ def elburg_bursting(spike_times):
 
 def alpha_normalised_cost_function(value,target,base=10):
     """Fitness of a value-target pair from 0 to 1 
+
+    .. WARNING:
+        I've found that this cost function is producing some odd behaviour.
+        It is best avoided until this is investigated
     
     For any value/target pair will give a normalised value for
     agreement 1 is complete value-target match and 0 is 0 match.
