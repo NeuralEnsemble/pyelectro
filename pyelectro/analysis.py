@@ -1148,7 +1148,10 @@ class IClampAnalysis(TraceAnalysis):
                                           self.t,
                                           self.delta,
                                           peak_threshold = peak_threshold)
-        
+
+
+    __error_during_analysis = False #hacky way of doing this. TODO: fix
+    
     @property
     def analysable_data(self):
         if self.max_min_dictionary['maxima_number'] < 3:
@@ -1159,11 +1162,17 @@ class IClampAnalysis(TraceAnalysis):
             analysable = False
         elif max(self.v) < 10.0:
             analysable = False
+        elif self.__error_during_analysis:
+            analysable = False
         else:
             analysable = True
         
         return analysable
-        
+
+    @analysable_data.setter
+    def analysable_data(self, val):
+        self.__error_during_analysis = True
+
     def plot_results(self):
         """
         Method represents the results visually.
@@ -1188,9 +1197,8 @@ class IClampAnalysis(TraceAnalysis):
     def analyse(self):
         """If data is analysable analyses and puts all results into a dict"""    
         
-        self.analysis_results={}
-
         if self.analysable_data:
+            analysis_results = {}
             max_min_dictionary=self.max_min_dictionary
 
             analysis_results['average_minimum'] = np.average(max_min_dictionary['minima_values'])
@@ -1239,5 +1247,8 @@ class IClampAnalysis(TraceAnalysis):
 
             self.analysis_results=analysis_results
 
-        else:
+        else: 
+            self.analysis_results = None
             logger.info('Data not suitable for analysis')
+
+        return self.analysis_results
