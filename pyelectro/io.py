@@ -65,3 +65,15 @@ def load_csv_data(file_path,plot=False):
         pyplot.show()
 
     return np.array(t), np.array(v)
+
+def summary(data, label=""):
+    if len(label)> 0: label = " (%s)"%label
+    info = "Data%s: "%label
+    if len(data)>4:
+        info+="%i points: [%f, %f, ..., %f]"%(len(data), data[0], data[1], data[-1])
+    elif len(data)>0:
+        info+="%i points: %s"%(len(data), data)
+    else:
+        info+="Empty data set"
+        
+    return info

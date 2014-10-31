@@ -62,7 +62,7 @@ def smooth(x,window_len=11,window='hanning'):
        numpy.convolve
        scipy.signal.lfilter
     """
-
+        
     if x.ndim != 1:
         raise ValueError, "smooth only accepts 1 dimension arrays."
 
@@ -222,7 +222,7 @@ def max_min(a,t,delta=0,peak_threshold=0.0):
             maximum_time=t[count]
             preceding_point_value=a[maximum_location-1]
             succeeding_point_value=a[maximum_location+1]
-
+            
             #filter:
             maximum_valid=False #logically consistent but not very pythonic..
             if ((maximum_value-preceding_point_value)>delta)*((maximum_value-succeeding_point_value)>delta):
@@ -231,7 +231,7 @@ def max_min(a,t,delta=0,peak_threshold=0.0):
                 maximum_valid=False
             if maximum_valid:
                 maxima_info.append((maximum_value,maximum_location,maximum_time))
-   
+            
     maxima_num=len(maxima_info)
     
     if maxima_num>0:
@@ -1011,7 +1011,7 @@ class TraceAnalysis(object):
         if end_analysis!=None:            
             self.v=v[start_index:end_index]
             self.t=t[start_index:end_index]
-    
+
     def __nearest_index(self,
 			array,
 			target_value):
@@ -1160,14 +1160,19 @@ class IClampAnalysis(TraceAnalysis):
     def analysable_data(self):
         if self.max_min_dictionary['maxima_number'] < 3:
             analysable = False
+            print("Cannot analyse data: too few maxima in data: %s"%self.max_min_dictionary)
         elif max(self.v) > 100.0:
             analysable = False
+            print("Cannot analyse data: max of v >100")
         elif min(self.v) > -30.0:
             analysable = False
+            print("Cannot analyse data: min of v > -30")
         elif max(self.v) < 10.0:
             analysable = False
+            print("Cannot analyse data: max of v < 10")
         elif self.__error_during_analysis:
             analysable = False
+            print("Cannot analyse data: error during analysis...")
         else:
             analysable = True
         
@@ -1233,9 +1238,9 @@ class IClampAnalysis(TraceAnalysis):
 
             analysis_results['spike_frequency_adaptation'] = exp_fit(spike_frequency_list[0],spike_frequency_list[1])
             analysis_results['spike_broadening'] = spike_broadening(spike_width_list[1])
-	    analysis_results['peak_linear_gradient'] = linear_fit(max_min_dictionary["maxima_times"],max_min_dictionary["maxima_values"])
+            analysis_results['peak_linear_gradient'] = linear_fit(max_min_dictionary["maxima_times"],max_min_dictionary["maxima_values"])
             
-            analysis_results['broadening_index'] = broadening_index(self.v,self.t)
+            #analysis_results['broadening_index'] = broadening_index(self.v,self.t)
 
 
             #this line here is because PPTD needs to be compared directly with experimental data:
