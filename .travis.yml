@@ -5,12 +5,11 @@ python:
   - "2.7"
 #  - "3.2"
 
-virtualenv:
-  system_site_packages: true
+before_install:
+- sudo apt-get update -qq
+- pip install numpy
 
-# command to install dependencies
 install:
-  - "sudo apt-get install -qq python-numpy python-scipy"
   - "python setup.py"
 
 # command to run tests and examples, e.g. python setup.py test
