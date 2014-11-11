@@ -6,7 +6,6 @@ AUTHOR: Mike Vella vellamike@gmail.com
 
 """
 
-from matplotlib import pyplot as plt
 import scipy.stats
 import numpy as np
 import math
@@ -22,6 +21,7 @@ def voltage_plot(t,v,title=None):
     Plot electrophysiology recording.
     """
 
+    from matplotlib import pyplot as plt
     plt.xlabel('Time (ms)')
     plt.ylabel('Voltage (mV)')
     plt.title(title)
@@ -1134,6 +1134,7 @@ class IClampAnalysis(TraceAnalysis):
             self.v = smooth(self.v,window_len=smoothing_window_len)
 
         if show_smoothed_data == True:
+            from matplotlib import pyplot as plt
             plt.plot(self.t,self.v)
             plt.show()
 

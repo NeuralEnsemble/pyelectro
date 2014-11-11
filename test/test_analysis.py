@@ -62,13 +62,12 @@ class TestObjectBuiltMorphology(unittest.TestCase):
         
         res = analysis.max_min(data, times)
         
-        print res
+        assert(res['minima_values'] == [-80])
+        assert(res['maxima_values'][0] == 30)
         
         times, data = self.get_data(600,0.1,-80,40,[23,55.5,120,333.88,555.999])
         
         res = analysis.max_min(data, times)
-        
-        print res
         
         
         times, data = self.get_real_data()
@@ -76,4 +75,5 @@ class TestObjectBuiltMorphology(unittest.TestCase):
         
         res = analysis.max_min(data, times)
         
-        print res
+        assert(res['maxima_times'] == [164, 187, 210, 233, 255, 278, 299, 320, 341, 362, 383, 405, 426, 447, 467, 487, 508, 528, 549, 570, 590, 612, 633, 654, 675, 695, 716, 736, 757, 779, 820, 841, 861, 882])
+        
