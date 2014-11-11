@@ -6,13 +6,15 @@ python:
 #  - "3.2"
 
 before_install:
-- sudo apt-get update -qq
-- pip install numpy
+  - sudo apt-get update -qq
+  - pip install numpy
+  - pip install nose
 
 install:
-  - "python setup.py"
+  - "python setup.py install"
 
-# command to run tests and examples, e.g. python setup.py test
+# command to run tests
 script:  
   - pwd
+  - nosetests -vs
 
