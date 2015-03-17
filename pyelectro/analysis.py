@@ -1161,16 +1161,16 @@ class IClampAnalysis(TraceAnalysis):
     def analysable_data(self):
         if self.max_min_dictionary['maxima_number'] < 3:
             analysable = False
-            print("Cannot analyse data: too few maxima in data: %s"%self.max_min_dictionary)
+            print("Cannot analyse data: too few maxima (%i) in data: %s"%(self.max_min_dictionary['maxima_number'], self.max_min_dictionary))
         elif max(self.v) > 100.0:
             analysable = False
-            print("Cannot analyse data: max of v >100")
-        elif min(self.v) > -30.0:
+            print("Cannot analyse data: max of v (%f) >100"%max(self.v))
+        elif min(self.v) > -5.0:
             analysable = False
-            print("Cannot analyse data: min of v > -30")
+            print("Cannot analyse data: min of v (%f) > -5"%min(self.v))
         elif max(self.v) < 10.0:
             analysable = False
-            print("Cannot analyse data: max of v < 10")
+            print("Cannot analyse data: max of v (%f) < 10"%max(self.v))
         elif self.__error_during_analysis:
             analysable = False
             print("Cannot analyse data: error during analysis...")
