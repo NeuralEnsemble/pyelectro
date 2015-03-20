@@ -291,7 +291,7 @@ def max_min2(v,t,delta=0.1,peak_threshold=0.0,window_length=11):
 
     #this anonymous function strips a list of all corresponding
     #non-zero elements in the mask:
-    print peak_mask
+    print("peak_mask: "+peak_mask)
     
     mask_filter = lambda l, mask : list(itertools.compress(l,mask))
 
@@ -767,6 +767,7 @@ def load_csv_data(file_path,plot=False):
     t=[]
 
     i=0
+    warnings_left = 5
     for row in csv_reader:
 
         try:
@@ -778,7 +779,12 @@ def load_csv_data(file_path,plot=False):
             v.append(v_value)
 
         except:
-            print 'row ',i,' invalid'
+            if warnings_left >0:
+                print('Row %i invalid in %s'%(i, file_path))
+                warnings_left-=1
+            elif warnings_left == 0:
+                print('Supressing further warnings about %s'%(file_path))
+                warnings_left-=1
 
         i+=1
 
@@ -937,8 +943,7 @@ def pptd_error(t_model,v_model,t_target,v_target,dvdt_threshold=None):
     #calculate the error:
     error=summed_matrix**2
 
-    print 'pptd error:'
-    print error
+    print('pptd error:'+ error)
 
     return error
 
@@ -1058,7 +1063,6 @@ class TraceAnalysis(object):
         #calculate max fitness value (TODO: there may be a more pythonic way to do this..)
         worst_cumulative_fitness=0
         for target in target_dict.keys():
-            print target
             if target_weights == None: 
                 target_weight = 1
             else:
@@ -1071,7 +1075,7 @@ class TraceAnalysis(object):
     
         #if we have 1 or 0 peaks we won't conduct any analysis
         if self.analysable_data == False:
-            print 'data is non-analysable'
+            print('Data is non-analysable')
             return worst_cumulative_fitness
             
         else:
@@ -1081,8 +1085,6 @@ class TraceAnalysis(object):
             
                 target_value=target_dict[target]
 
-                print 'examining target ' + target
-
                 if target_weights == None: 
                     target_weight = 1
                 else:
@@ -1090,11 +1092,14 @@ class TraceAnalysis(object):
                         target_weight = target_weights[target]
                     else:
                         target_weight = 1.0
-            
-                value=self.analysis_results[target]
-                #let function pick Q automatically
-                fitness+=target_weight*cost_function(value,target_value)
-                
+                if target_weight > 0:
+                    value=self.analysis_results[target]
+                    #let function pick Q automatically
+                    inc = target_weight*cost_function(value,target_value)
+                    fitness += inc
+
+                    print('Target %s (weight %f): target val: %f, actual: %f, fitness increment: %f'%(target, target_weight, target_value, value, inc))
+
             self.fitness=fitness
             return self.fitness
             
