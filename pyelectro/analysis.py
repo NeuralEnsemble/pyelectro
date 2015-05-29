@@ -1098,7 +1098,7 @@ class TraceAnalysis(object):
                     inc = target_weight*cost_function(value,target_value)
                     fitness += inc
 
-                    print('Target %s (weight %f): target val: %f, actual: %f, fitness increment: %f'%(target, target_weight, target_value, value, inc))
+                    print('Target %s (weight %f): target val: %s, actual: %s, fitness increment: %s'%(target, target_weight, target_value, value, inc))
 
             self.fitness=fitness
             return self.fitness
@@ -1131,7 +1131,7 @@ class IClampAnalysis(TraceAnalysis):
                  smooth_data=False,
                  show_smoothed_data=False,
                  smoothing_window_len=11):
-    
+                     
         #call the parent constructor to prepare the v,t vectors:
         super(IClampAnalysis,self).__init__(v,t,start_analysis,end_analysis)
 
@@ -1158,7 +1158,7 @@ class IClampAnalysis(TraceAnalysis):
                                           self.t,
                                           self.delta,
                                           peak_threshold = peak_threshold)
-
+                                         
 
     __error_during_analysis = False #hacky way of doing this. TODO: fix
     
@@ -1211,7 +1211,7 @@ class IClampAnalysis(TraceAnalysis):
 
     def analyse(self):
         """If data is analysable analyses and puts all results into a dict"""    
-        
+         
         if self.analysable_data:
             analysis_results = {}
             max_min_dictionary=self.max_min_dictionary
@@ -1248,9 +1248,8 @@ class IClampAnalysis(TraceAnalysis):
             
             #analysis_results['broadening_index'] = broadening_index(self.v,self.t)
 
-
             #this line here is because PPTD needs to be compared directly with experimental data:
-            if self.target_data_path!=None:
+            if self.target_data_path!=None and len(self.target_data_path)>0:
                 t_experimental,v_experimental=load_csv_data(self.target_data_path)
                 try:
                     analysis_results['pptd_error']=pptd_error(self.t,self.v,
