@@ -52,7 +52,7 @@ def load_csv_data(file_path,plot=False):
             v.append(v_value)
 
         except:
-            print 'row ',i,' invalid'
+            print('row ',i,' invalid')
 
         i+=1
 

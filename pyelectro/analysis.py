@@ -1256,7 +1256,7 @@ class IClampAnalysis(TraceAnalysis):
                                               t_experimental,v_experimental,
                                               dvdt_threshold=self.dvdt_threshold)
                 except:
-                    print 'WARNING PPTD failure'
+                    print('WARNING PPTD failure')
                     analysis_results['pptd_error'] = 1
 
             self.analysis_results=analysis_results
