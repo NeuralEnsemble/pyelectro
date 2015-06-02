@@ -42,6 +42,8 @@ class TestObjectBuiltMorphology(unittest.TestCase):
 
 
     def test_spike_frequencies(self):
+
+        print("- test_spike_frequencies()")
         
         data = [10,20,40,140]
         
@@ -58,6 +60,8 @@ class TestObjectBuiltMorphology(unittest.TestCase):
 
     def test_max_min(self):
         
+        print("- test_max_min()")
+
         times, data = self.get_data(10,1,-80,30,[2,6])
         
         res = analysis.max_min(data, times)

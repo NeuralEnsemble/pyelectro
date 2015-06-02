@@ -2,3 +2,4 @@ pyelectro.egg-info
 dist
 build
 *.pyc
+*~
