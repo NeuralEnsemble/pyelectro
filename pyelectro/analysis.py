@@ -14,6 +14,10 @@ from scipy import interpolate
 import operator
 import itertools
 
+import pprint
+    
+pp = pprint.PrettyPrinter(indent=4)
+
 logger = logging.getLogger(__name__)
 
 def voltage_plot(t,v,title=None):
@@ -1013,7 +1017,7 @@ class TraceAnalysis(object):
         start_index=self.__nearest_index(self.t,start_analysis)
         end_index=self.__nearest_index(self.t,end_analysis)
 
-        if end_analysis!=None:            
+        if end_analysis!=None or start_analysis!=0: 
             self.v=v[start_index:end_index]
             self.t=t[start_index:end_index]
 
@@ -1267,3 +1271,222 @@ class IClampAnalysis(TraceAnalysis):
             logger.info('Data not suitable for analysis')
 
         return self.analysis_results
+
+
+class NetworkAnalysis(object):
+    """Analysis class for networks of spiking cells, mainly simulation data
+
+    :param v: time-dependent variable (usually voltage)
+    :param t: time-vector
+    :param analysis_var: dictionary containing parameters to be used
+        in analysis such as delta for peak detection
+    :param start_analysis: time t where analysis is to start
+    :param end_analysis: time in t where analysis is to end
+
+    """
+
+    def __init__(self,
+                 volts,
+                 t,
+                 analysis_var,
+                 start_analysis=0,
+                 end_analysis=None):
+
+        self.volts = volts
+        self.t = np.array(t)
+
+        if end_analysis is None:
+            end_analysis = t[-1]
+
+        start_index=self.__nearest_index(self.t,start_analysis)
+        end_index=self.__nearest_index(self.t,end_analysis)
+
+        if end_analysis!=None or start_analysis!=0:  
+            self.t=t[start_index:end_index]
+            for ref in volts.keys():
+                self.volts[ref] =volts[ref][start_index:end_index]
+
+        self.delta = analysis_var['peak_delta']
+        self.baseline = analysis_var['baseline']
+        self.dvdt_threshold = analysis_var['dvdt_threshold']
+
+
+        if "peak_threshold" in analysis_var.keys():
+            peak_threshold = analysis_var["peak_threshold"]
+        else:
+            peak_threshold = None
+
+        
+        self.max_min_dictionaries = {}
+        for ref in self.volts.keys():
+            max_min_dict = max_min(self.volts[ref],
+                                   self.t,
+                                   self.delta,
+                                   peak_threshold = peak_threshold)
+            self.max_min_dictionaries[ref] = max_min_dict
+
+    
+    def __nearest_index(self,
+        array,
+        target_value):
+
+        """Finds index of first nearest value to target_value in array"""
+        nparray=np.array(array)
+        differences=np.abs(nparray-target_value)
+        min_difference=differences.min()
+        index=np.nonzero(differences==min_difference)[0][0]
+        return index
+
+
+    '''
+    def plot_results(self):
+        """
+        Method represents the results visually.
+        """
+
+        import matplotlib.pyplot as plt
+
+        minima_times = self.max_min_dictionary['minima_times']
+        maxima_times = self.max_min_dictionary['maxima_times']
+
+        for time in minima_times:
+            plt.axvline(x=time)
+        for time in maxima_times:
+            plt.axvline(x=time,color='r')
+
+        plt.xlabel('Time (ms)')
+        plt.ylabel('Voltage (mV)')
+
+        plt.plot(self.t,self.v)
+        plt.show()'''
+        
+
+    def analyse(self, targets=None):
+        """ Analyses and puts all results into a dict"""    
+
+        analysis_results = {}
+        
+        
+        for ref in self.volts.keys():
+            max_min_dictionary=self.max_min_dictionaries[ref]
+            v = self.volts[ref]
+            
+            #print("Max/min for %s:"%(ref))
+            #pp.pprint(max_min_dictionary)
+            
+            pre = '%s:'%(ref)
+            
+            if targets==None or pre+'min_peak_no' in targets:
+                analysis_results[pre+'min_peak_no'] = max_min_dictionary['minima_number']
+                
+            if targets==None or pre+'max_peak_no' in targets:
+                analysis_results[pre+'max_peak_no'] = max_min_dictionary['maxima_number']
+                
+            if max_min_dictionary['maxima_number'] >= 1:
+                
+                if targets==None or pre+'average_maximum' in targets:
+                    analysis_results[pre+'average_maximum'] = np.average(max_min_dictionary['maxima_values'])
+                if targets==None or pre+'first_spike_time' in targets:
+                    analysis_results[pre+'first_spike_time'] = max_min_dictionary['maxima_times'][0]
+                
+            if max_min_dictionary['minima_number'] >= 1:
+                
+                if targets==None or pre+'average_minimum' in targets:
+                    analysis_results[pre+'average_minimum'] = np.average(max_min_dictionary['minima_values'])
+            
+            if max_min_dictionary['maxima_number'] >= 3:
+
+                if targets==None or pre+'mean_spike_frequency' in targets:
+                    analysis_results[pre+'mean_spike_frequency'] = mean_spike_frequency(max_min_dictionary['maxima_times'])
+                
+                if targets==None or pre+'interspike_time_covar' in targets:
+                    analysis_results[pre+'interspike_time_covar'] = spike_covar(max_min_dictionary['maxima_times'])
+
+
+                if targets==None or pre+'trough_phase_adaptation' in targets:
+                    trough_phases=minima_phases(self.t, v, delta = self.delta)
+
+                    try:
+                        analysis_results[pre+'trough_phase_adaptation'] = exp_fit(trough_phases[0],trough_phases[1])
+                    except:
+                        logging.warning('trough_phase_adaptation raising an error')
+
+
+                if targets==None or pre+'spike_broadening' in targets or pre+'spike_width_adaptation' in targets:
+                    
+                    spike_width_list = spike_widths(v,self.t,self.baseline,self.delta)
+
+                    if targets==None or pre+'spike_broadening' in targets:
+                        analysis_results[pre+'spike_broadening'] = spike_broadening(spike_width_list[1])
+
+                    if targets==None or pre+'spike_width_adaptation' in targets:
+                        try:
+                            analysis_results[pre+'spike_width_adaptation'] = exp_fit(spike_width_list[0],spike_width_list[1])
+                        except:
+                            logging.warning('spike_width_adaptation raising an exception, exp_fit looks problematic')
+
+                if targets==None or pre+'peak_decay_exponent' in targets or pre+'peak_decay_exponent' in targets:
+                    spike_frequency_list = spike_frequencies(max_min_dictionary['maxima_times'])
+                    
+                    if targets==None or pre+'peak_decay_exponent' in targets:
+                        analysis_results[pre+'peak_decay_exponent'] = three_spike_adaptation(max_min_dictionary['maxima_times'],max_min_dictionary['maxima_values'])
+
+                    if targets==None or pre+'spike_frequency_adaptation' in targets:
+                        analysis_results[pre+'spike_frequency_adaptation'] = exp_fit(spike_frequency_list[0],spike_frequency_list[1])
+
+                if targets==None or pre+'trough_decay_exponent' in targets:
+                    analysis_results[pre+'trough_decay_exponent'] = three_spike_adaptation(max_min_dictionary['minima_times'],max_min_dictionary['minima_values'])
+
+
+                if targets==None or pre+'peak_linear_gradient' in targets:
+                    analysis_results[pre+'peak_linear_gradient'] = linear_fit(max_min_dictionary["maxima_times"],max_min_dictionary["maxima_values"])
+                
+
+
+        self.analysis_results=analysis_results
+
+
+        return self.analysis_results
+    
+    def evaluate_fitness(self,
+                         target_dict={},
+                         target_weights=None,
+                         cost_function=normalised_cost_function):
+        """
+        Return the estimated fitness of the data, based on the cost function being used.
+
+            :param target_dict: key-value pairs for targets
+            :param target_weights: key-value pairs for target weights
+            :param cost_function: cost function (callback) to assign individual targets sub-fitness.
+        """
+
+
+        fitness = 0
+
+        for target in target_dict.keys():
+
+            target_value=target_dict[target]
+
+            if target_weights == None: 
+                target_weight = 1
+            else:
+                if target in target_weights.keys():
+                    target_weight = target_weights[target]
+                else:
+                    target_weight = 0  # If it's not mentioned assunme weight = 0!
+                    
+            if target_weight > 0:
+                inc = target_weight # default...
+                if self.analysis_results.has_key(target):
+                    value=self.analysis_results[target]
+                    #let function pick Q automatically
+                    inc = target_weight*cost_function(value,target_value)
+                else:
+                    value = '<<cannot be calculated!>>'
+                
+                fitness += inc
+
+                print('Target %s (weight %f): target val: %s, actual: %s, fitness increment: %s'%(target, target_weight, target_value, value, inc))
+
+        self.fitness=fitness
+        return self.fitness
