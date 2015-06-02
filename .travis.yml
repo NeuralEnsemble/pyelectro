@@ -2,7 +2,7 @@ language: python
 
 python:
   - "2.7"
-  - "3.2"
+  #- "3.2"   # Should work, just need to generate correct py version for conda below from $TRAVIS_PYTHON_VERSION
 
 
 install:
