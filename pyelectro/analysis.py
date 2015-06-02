@@ -1103,7 +1103,7 @@ class TraceAnalysis(object):
                     inc = target_weight*cost_function(value,target_value)
                     fitness += inc
 
-                    print('Target %s (weight %f): target val: %s, actual: %s, fitness increment: %s'%(target, target_weight, target_value, value, inc))
+                    print('Target %s (weight %s): target val: %s, actual: %s, fitness increment: %s'%(target, target_weight, target_value, value, inc))
 
             self.fitness=fitness
             return self.fitness
@@ -1290,22 +1290,42 @@ class NetworkAnalysis(object):
                  t,
                  analysis_var,
                  start_analysis=0,
-                 end_analysis=None):
+                 end_analysis=None,
+                 smooth_data=False,
+                 show_smoothed_data=False,
+                 smoothing_window_len=11):
 
         self.volts = volts
-        self.t = np.array(t)
+        self.t = t
+        
+        if smooth_data == True:
+            for ref in volts.keys():
+                # TODO improve this craziness
+                self.volts[ref] = smooth(np.array(self.volts[ref]), window_len=smoothing_window_len).tolist()
+                
+            if show_smoothed_data == True:
+                from matplotlib import pyplot as plt
+                
+                for ref in volts.keys():
+                    plt.plot(self.t, self.volts[ref], label=ref)
+                plt.legend()
+                plt.show()
 
-        if end_analysis is None:
-            end_analysis = t[-1]
 
         start_index=self.__nearest_index(self.t,start_analysis)
-        end_index=self.__nearest_index(self.t,end_analysis)
+        
+        if end_analysis is None:
+            end_analysis = t[-1]
+            end_index=len(self.t)-1
+        else:
+            end_index=len(self.t)
+    
 
         if end_analysis!=None or start_analysis!=0:  
-            self.t=t[start_index:end_index]
+            self.t=t[start_index:end_index+1]
             for ref in volts.keys():
-                self.volts[ref] =volts[ref][start_index:end_index]
-
+                self.volts[ref] =volts[ref][start_index:end_index+1]
+                
         self.delta = analysis_var['peak_delta']
         self.baseline = analysis_var['baseline']
         self.dvdt_threshold = analysis_var['dvdt_threshold']
@@ -1486,7 +1506,7 @@ class NetworkAnalysis(object):
                 
                 fitness += inc
 
-                print('Target %s (weight %f): target val: %s, actual: %s, fitness increment: %s'%(target, target_weight, target_value, value, inc))
+                print('Target %s (weight %s): target val: %s, actual: %s, fitness increment: %s'%(target, target_weight, target_value, value, inc))
 
         self.fitness=fitness
         return self.fitness
