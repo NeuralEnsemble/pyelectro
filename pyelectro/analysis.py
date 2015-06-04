@@ -208,7 +208,7 @@ def max_min(a,t,delta=0,peak_threshold=0.0):
        something which should be implemented.
 
     """
-
+    #print("Calculating max_min of a: (%s,...,%s)#%i, t: (%s,...,%s)#%i; thresh %s, delta %s"%(a[0],a[-1],len(a),t[0],t[-1],len(t), peak_threshold, delta))
     gradients = np.diff(a)
 
     maxima_info = []
@@ -1386,13 +1386,9 @@ class NetworkAnalysis(object):
 
         analysis_results = {}
         
-        
         for ref in self.volts.keys():
             max_min_dictionary=self.max_min_dictionaries[ref]
             v = self.volts[ref]
-            
-            #print("Max/min for %s:"%(ref))
-            #pp.pprint(max_min_dictionary)
             
             pre = '%s:'%(ref)
             
@@ -1433,17 +1429,20 @@ class NetworkAnalysis(object):
 
 
                 if targets==None or pre+'spike_broadening' in targets or pre+'spike_width_adaptation' in targets:
-                    
+
                     spike_width_list = spike_widths(v,self.t,self.baseline,self.delta)
 
-                    if targets==None or pre+'spike_broadening' in targets:
-                        analysis_results[pre+'spike_broadening'] = spike_broadening(spike_width_list[1])
+                    if len(spike_width_list)>=2 and len(spike_width_list[0])>0:
+                        if targets==None or pre+'spike_broadening' in targets:
+                            analysis_results[pre+'spike_broadening'] = spike_broadening(spike_width_list[1])
 
-                    if targets==None or pre+'spike_width_adaptation' in targets:
-                        try:
-                            analysis_results[pre+'spike_width_adaptation'] = exp_fit(spike_width_list[0],spike_width_list[1])
-                        except:
-                            logging.warning('spike_width_adaptation raising an exception, exp_fit looks problematic')
+                        if targets==None or pre+'spike_width_adaptation' in targets:
+                            try:
+                                analysis_results[pre+'spike_width_adaptation'] = exp_fit(spike_width_list[0],spike_width_list[1])
+                            except:
+                                logging.warning('spike_width_adaptation raising an exception, exp_fit looks problematic')
+                    else:
+                        logging.warning('spike_width_list does not have enough points for calculating spike_width_adaptation or spike_broadening: %s'%spike_width_list)
 
                 if targets==None or pre+'peak_decay_exponent' in targets or pre+'peak_decay_exponent' in targets:
                     spike_frequency_list = spike_frequencies(max_min_dictionary['maxima_times'])
