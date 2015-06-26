@@ -4,13 +4,16 @@ from pyelectro import analysis
 from pyelectro import io
 
 import os
+import pprint
+
+pp = pprint.PrettyPrinter(indent=4)
 
 try:
     import unittest2 as unittest
 except ImportError:
     import unittest
 
-class TestObjectBuiltMorphology(unittest.TestCase):
+class TestAnalysis(unittest.TestCase):
 
 
     def get_data(self, tmax, dt, vmin, vmax, spikes):
@@ -56,6 +59,30 @@ class TestObjectBuiltMorphology(unittest.TestCase):
         self.assertEqual(freqs[0],100)
         self.assertEqual(freqs[1],50)
         self.assertEqual(freqs[2],10)
+        
+        
+
+    def test_iclamp_analysis_data(self):
+        
+        print("- test_iclamp_analysis_data()")
+        
+        analysis_var={'peak_delta':0,'baseline':0,'dvdt_threshold':0, 'peak_threshold':0}
+        
+        times, data = self.get_real_data()
+
+        analysis_data=analysis.IClampAnalysis(data,
+                                           times,
+                                           analysis_var,
+                                           start_analysis=0,
+                                           end_analysis=1000,
+                                           smooth_data=False,
+                                           show_smoothed_data=False)
+                                          
+        analysed = analysis_data.analyse()
+                                           
+        pp.pprint(analysed)
+        
+
 
 
     def test_max_min(self):
@@ -81,3 +108,12 @@ class TestObjectBuiltMorphology(unittest.TestCase):
         
         assert(res['maxima_times'] == [164, 187, 210, 233, 255, 278, 299, 320, 341, 362, 383, 405, 426, 447, 467, 487, 508, 528, 549, 570, 590, 612, 633, 654, 675, 695, 716, 736, 757, 779, 820, 841, 861, 882])
         
+        
+        
+    def runTest(self):
+        print("Running tests in TestAnalysis")
+
+if __name__ == '__main__':
+    
+    ta = TestAnalysis()
+    ta.test_iclamp_analysis_data()
