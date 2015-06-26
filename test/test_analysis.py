@@ -35,11 +35,14 @@ class TestAnalysis(unittest.TestCase):
     
     def get_real_data(self):
         
-        if os.path.isfile('100pA_1.csv'):
-            times, data = analysis.load_csv_data('100pA_1.csv')
-        elif os.path.isfile('test/100pA_1.csv'):
-            times, data = analysis.load_csv_data('test/100pA_1.csv')
+        data_file = 'Gran_0.dat'
+        delimiter = '\t'
+        if os.path.isfile(data_file):
+            times, data = analysis.load_csv_data(data_file, delimiter=delimiter)
+        elif os.path.isfile('test/'+data_file):
+            times, data = analysis.load_csv_data('test/'+data_file, delimiter=delimiter)
         
+        print("Loaded data with %i times & %i datapoints from %s"%(len(times),len(data),data_file))
         return times, data
         
 
@@ -82,6 +85,23 @@ class TestAnalysis(unittest.TestCase):
                                            
         pp.pprint(analysed)
         
+        test_data = \
+            {   'average_maximum': 20.332122777777784,
+            'average_minimum': -78.491198000000011,
+            'first_spike_time': 108.44,
+            'interspike_time_covar': 0.019741062134352557,
+            'max_peak_no': 18,
+            'mean_spike_frequency': 34.545824019508231,
+            'min_peak_no': 17,
+            'peak_decay_exponent': -0.064912249086890028,
+            'peak_linear_gradient': -0.0020092762353974025,
+            'spike_broadening': 1.0495985656104889,
+            'spike_frequency_adaptation': 0.015301587514290844,
+            'spike_width_adaptation': 0.0078514736435321177,
+            'trough_decay_exponent': 0.0043242589967645087,
+            'trough_phase_adaptation': 0.01048418950808087}
+        
+        assert(analysed == test_data)
 
 
 
@@ -106,7 +126,9 @@ class TestAnalysis(unittest.TestCase):
         
         res = analysis.max_min(data, times)
         
-        assert(res['maxima_times'] == [164, 187, 210, 233, 255, 278, 299, 320, 341, 362, 383, 405, 426, 447, 467, 487, 508, 528, 549, 570, 590, 612, 633, 654, 675, 695, 716, 736, 757, 779, 820, 841, 861, 882])
+        print('Found %i maxima: %s'%(len(res['maxima_times']),res['maxima_times']))
+        
+        assert(res['maxima_times'] == [108.44, 139.52, 169.08, 198.15, 227.02, 255.80000000000004, 284.55, 313.26, 341.98, 370.7, 399.40999999999997, 428.13, 456.84999999999997, 485.58, 514.3100000000001, 543.04, 571.77, 600.54])
         
         
         

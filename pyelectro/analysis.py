@@ -688,70 +688,9 @@ def elburg_bursting(spike_times):
 
     return B
 
-def alpha_normalised_cost_function(value,target,base=10):
-    """Fitness of a value-target pair from 0 to 1 
+ 
 
-    .. WARNING:
-        I've found that this cost function is producing some odd behaviour.
-        It is best avoided until this is investigated
-
-    For any value/target pair will give a normalised value for
-    agreement 1 is complete value-target match and 0 is 0 match.
-    A mirrored exponential function is used.
-    The fitness is given by the expression :math:`fitness = base^{-x}`
-
-    where:
-
-    .. math::
-          x = {\dfrac{(value-target)}{(target + 0.01)^2}}
-
-    :param value: value measured
-    :param t: target
-    :param base: the value 'base' in the above mathematical expression for x
-
-    :return: fitness - a real number from 0 to 1
-
-    """
-
-    value = float(value)
-    target = float(target)
-
-    x=((value-target)/(target+0.01))**2 #the 0.01 thing is a bit of a hack at the moment.
-    fitness=base**(-x)
-    return fitness    
-
-def normalised_cost_function(value,target,Q=None):
-    """ Returns fitness of a value-target pair from 0 to 1 
-
-    For any value/target pair will give a normalised value for
-    agreement 0 is complete value-target match and 1 is "no" match.
-
-    If no Q is assigned, it is set such that it satisfies the condition
-    fitness=0.7 when (target-valu)e=10*target. This is essentially 
-    empirical and seems to work. Mathematical derivation is on Mike Vella's 
-    Lab Book 1 p.42 (page dated 15/12/11).
-
-    :param value: value measured
-    :param t: target
-    :param Q: This is the sharpness of the cost function, higher values correspond
-        to a sharper cost function. A high Q-Value may lead an optimizer to a solution
-        quickly once it nears the solution.
-
-    :return: fitness value from 0 to 1
-
-    """
-
-    value = float(value)
-    target = float(target)
-
-    if Q==None:
-        Q=7/(300*(target**2))
-
-    fitness=1-1/(Q*(target-value)**2+1)
-
-    return fitness    
-
-def load_csv_data(file_path,plot=False):
+def load_csv_data(file_path, delimiter=',',plot=False):
     """Extracts time and voltage data from a csv file
 
     Data must be in a csv and in two columns, first time and second 
@@ -764,8 +703,8 @@ def load_csv_data(file_path,plot=False):
     """
     import csv
 
-    csv_file=file(file_path,'r')
-    csv_reader=csv.reader(csv_file)
+    csv_file=file(file_path, 'r')
+    csv_reader=csv.reader(csv_file, delimiter=delimiter)
 
     v=[]
     t=[]
@@ -784,7 +723,7 @@ def load_csv_data(file_path,plot=False):
 
         except:
             if warnings_left >0:
-                print('Row %i invalid in %s'%(i, file_path))
+                print('Row %i invalid in %s: %s, delimiter = [%s]'%(i, file_path, row, delimiter))
                 warnings_left-=1
             elif warnings_left == 0:
                 print('Supressing further warnings about %s'%(file_path))
@@ -1053,60 +992,6 @@ class TraceAnalysis(object):
             if show_plot:
                 plt.show()
 
-    def evaluate_fitness(self,
-                         target_dict={},
-                         target_weights=None,
-                         cost_function=normalised_cost_function):
-        """
-        Return the estimated fitness of the data, based on the cost function being used.
-
-            :param target_dict: key-value pairs for targets
-            :param target_weights: key-value pairs for target weights
-            :param cost_function: cost function (callback) to assign individual targets sub-fitness.
-        """
-
-        #calculate max fitness value (TODO: there may be a more pythonic way to do this..)
-        worst_cumulative_fitness=0
-        for target in target_dict.keys():
-            if target_weights == None: 
-                target_weight = 1
-            else:
-                if target in target_weights.keys():
-                    target_weight = target_weights[target]
-                else:
-                    target_weight = 1.0
-
-            worst_cumulative_fitness += target_weight
-
-        #if we have 1 or 0 peaks we won't conduct any analysis
-        if self.analysable_data == False:
-            print('Data is non-analysable')
-            return worst_cumulative_fitness
-
-        else:
-            fitness = 0
-
-            for target in target_dict.keys():
-
-                target_value=target_dict[target]
-
-                if target_weights == None: 
-                    target_weight = 1
-                else:
-                    if target in target_weights.keys():
-                        target_weight = target_weights[target]
-                    else:
-                        target_weight = 1.0
-                if target_weight > 0:
-                    value=self.analysis_results[target]
-                    #let function pick Q automatically
-                    inc = target_weight*cost_function(value,target_value)
-                    fitness += inc
-
-                    print('Target %s (weight %s): target val: %s, actual: %s, fitness increment: %s'%(target, target_weight, target_value, value, inc))
-
-            self.fitness=fitness
-            return self.fitness
 
 class IClampAnalysis(TraceAnalysis):
     """Analysis class for data from whole cell current injection experiments
@@ -1357,28 +1242,6 @@ class NetworkAnalysis(object):
         index=np.nonzero(differences==min_difference)[0][0]
         return index
 
-
-    '''
-    def plot_results(self):
-        """
-        Method represents the results visually.
-        """
-
-        import matplotlib.pyplot as plt
-
-        minima_times = self.max_min_dictionary['minima_times']
-        maxima_times = self.max_min_dictionary['maxima_times']
-
-        for time in minima_times:
-            plt.axvline(x=time)
-        for time in maxima_times:
-            plt.axvline(x=time,color='r')
-
-        plt.xlabel('Time (ms)')
-        plt.ylabel('Voltage (mV)')
-
-        plt.plot(self.t,self.v)
-        plt.show()'''
         
 
     def analyse(self, targets=None):
@@ -1464,48 +1327,5 @@ class NetworkAnalysis(object):
 
         self.analysis_results=analysis_results
 
-
         return self.analysis_results
-    
-    def evaluate_fitness(self,
-                         target_dict={},
-                         target_weights=None,
-                         cost_function=normalised_cost_function):
-        """
-        Return the estimated fitness of the data, based on the cost function being used.
 
-            :param target_dict: key-value pairs for targets
-            :param target_weights: key-value pairs for target weights
-            :param cost_function: cost function (callback) to assign individual targets sub-fitness.
-        """
-
-
-        fitness = 0
-
-        for target in target_dict.keys():
-
-            target_value=target_dict[target]
-
-            if target_weights == None: 
-                target_weight = 1
-            else:
-                if target in target_weights.keys():
-                    target_weight = target_weights[target]
-                else:
-                    target_weight = 0  # If it's not mentioned assunme weight = 0!
-                    
-            if target_weight > 0:
-                inc = target_weight # default...
-                if self.analysis_results.has_key(target):
-                    value=self.analysis_results[target]
-                    #let function pick Q automatically
-                    inc = target_weight*cost_function(value,target_value)
-                else:
-                    value = '<<cannot be calculated!>>'
-                
-                fitness += inc
-
-                print('Target %s (weight %s): target val: %s, actual: %s, fitness increment: %s'%(target, target_weight, target_value, value, inc))
-
-        self.fitness=fitness
-        return self.fitness
