@@ -100,9 +100,10 @@ class TestAnalysis(unittest.TestCase):
             'spike_width_adaptation': 0.0078514736435321177,
             'trough_decay_exponent': 0.0043242589967645087,
             'trough_phase_adaptation': 0.01048418950808087}
+            
+        for key in analysed.keys():
+            self.assertAlmostEqual(analysed[key],test_data[key])
         
-        assert(analysed == test_data)
-
 
 
     def test_max_min(self):
