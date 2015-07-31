@@ -19,6 +19,7 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 def voltage_plot(t,v,title=None):
     """

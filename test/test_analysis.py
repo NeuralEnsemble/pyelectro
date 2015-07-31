@@ -138,5 +138,7 @@ class TestAnalysis(unittest.TestCase):
 
 if __name__ == '__main__':
     
+    import logging
+    logging.basicConfig(level=logging.WARNING)
     ta = TestAnalysis()
     ta.test_iclamp_analysis_data()
