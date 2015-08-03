@@ -10,6 +10,7 @@ import scipy.stats
 import numpy as np
 import math
 import logging
+import sys
 from scipy import interpolate
 import operator
 import itertools
@@ -186,6 +187,89 @@ def centered_slice(v, index, length=5):
     slice = v[start_index:start_index + length]
 
     return slice
+
+
+def max_min_simple(a,times,delta=0,peak_threshold=0.0):
+    
+    print("Calculating max_min_simple of a: (%s,...,%s)#%i, t: (%s,...,%s)#%i; thresh %s, delta %s"%(a[0],a[-1],len(a),times[0],times[-1],len(times), peak_threshold, delta))
+    
+    maxima_locations = []
+    maxima_number = 0
+    maxima_times = []
+    maxima_values = []
+
+    minima_locations = []
+    minima_number = 0
+    minima_times = []
+    minima_values = []
+    
+    spiking  = False
+    has_spiked  = False
+    
+    last_max_loc = -1
+    last_max_t = -1
+    last_max_v = -1*sys.float_info.max
+    
+    last_min_loc = -1
+    last_min_t = -1
+    last_min_v = sys.float_info.max
+    
+    for i in range(len(a)):
+        t = times[i]
+        v = a[i]
+        
+        if not spiking and v>=peak_threshold:
+            spiking = True
+            has_spiked = True
+            if last_min_loc >0:
+                minima_locations.append(last_min_loc)
+                minima_times.append(last_min_t)
+                minima_values.append(last_min_v)
+                minima_number+=1
+
+            last_min_loc = -1
+            last_min_t = -1
+            last_min_v = sys.float_info.max
+                
+        elif spiking and v<peak_threshold:
+            
+            spiking = False
+            if last_max_loc >0:
+                maxima_locations.append(last_max_loc)
+                maxima_times.append(last_max_t)
+                maxima_values.append(last_max_v)
+                maxima_number+=1
+            
+            last_max_loc = -1
+            last_max_t = -1
+            last_max_v = -1*sys.float_info.max
+            
+        if spiking:
+            
+            if v >= last_max_v:
+                last_max_loc = i
+                last_max_t = t
+                last_max_v = v
+                
+        elif has_spiked:
+        
+            if v <= last_min_v:
+                last_min_loc = i
+                last_min_t = t
+                last_min_v = v
+      
+    #need to construct the dictionary here:
+    turning_points = {'maxima_locations':maxima_locations,
+                      'minima_locations':minima_locations,
+                      'maxima_number':maxima_number,
+                      'minima_number':minima_number,
+                      'maxima_times':maxima_times,
+                      'minima_times':minima_times, 
+                      'maxima_values':maxima_values,
+                      'minima_values':minima_values}
+                      
+
+    return turning_points
 
 def max_min(a,t,delta=0,peak_threshold=0.0):
     """
@@ -1021,7 +1105,8 @@ class IClampAnalysis(TraceAnalysis):
                  target_data_path=None,
                  smooth_data=False,
                  show_smoothed_data=False,
-                 smoothing_window_len=11):
+                 smoothing_window_len=11,
+                 max_min_method=max_min):
 
         #call the parent constructor to prepare the v,t vectors:
         super(IClampAnalysis,self).__init__(v,t,start_analysis,end_analysis)
@@ -1045,11 +1130,11 @@ class IClampAnalysis(TraceAnalysis):
         else:
             peak_threshold = None
 
-        self.max_min_dictionary = max_min(self.v,
+        self.max_min_dictionary = max_min_method(self.v,
                                           self.t,
                                           self.delta,
                                           peak_threshold = peak_threshold)
-
+                                          
 
     __error_during_analysis = False #hacky way of doing this. TODO: fix
 
