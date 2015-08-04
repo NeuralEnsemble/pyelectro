@@ -1310,10 +1310,11 @@ class NetworkAnalysis(object):
         
         self.max_min_dictionaries = {}
         for ref in self.volts.keys():
-            max_min_dict = max_min(self.volts[ref],
+            max_min_dict = max_min_simple(self.volts[ref],
                                    self.t,
                                    self.delta,
                                    peak_threshold = peak_threshold)
+                                   
             self.max_min_dictionaries[ref] = max_min_dict
 
     
