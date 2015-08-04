@@ -5,8 +5,6 @@ from pyelectro import io
 
 import os
 import pprint
-            
-import matplotlib.pyplot as pylab
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -68,6 +66,7 @@ class TestAnalysis(unittest.TestCase):
        
     def add_horizontal_line(self, y, times):
 
+	import matplotlib.pyplot as pylab
         ys = [y,y]
         xs = [times[0], times[-1]]
         pylab.plot(xs, ys, 'k--') 
@@ -119,6 +118,7 @@ class TestAnalysis(unittest.TestCase):
 
 
             if show:
+		import matplotlib.pyplot as pylab
                 fig = pylab.figure()
                 fig.canvas.set_window_title("Data loaded (%i traces at %i time points)"%(len(volts),len(times)))
 
