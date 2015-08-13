@@ -189,9 +189,13 @@ def centered_slice(v, index, length=5):
     return slice
 
 
-def max_min_simple(a,times,delta=0,peak_threshold=0.0):
+def max_min_simple(a,
+                   times,
+                   delta = 0,
+                   peak_threshold = 0.0,
+                   verbose = False):
     
-    print("Calculating max_min_simple of a: (%s,...,%s)#%i, t: (%s,...,%s)#%i; thresh %s, delta %s"%(a[0],a[-1],len(a),times[0],times[-1],len(times), peak_threshold, delta))
+    if verbose: print("Calculating max_min_simple of a: (%s,...,%s)#%i, t: (%s,...,%s)#%i; thresh %s, delta %s"%(a[0],a[-1],len(a),times[0],times[-1],len(times), peak_threshold, delta))
     
     maxima_locations = []
     maxima_number = 0
@@ -219,6 +223,7 @@ def max_min_simple(a,times,delta=0,peak_threshold=0.0):
         v = a[i]
         
         if not spiking and v>=peak_threshold:
+            if verbose: print('Spike of %s at %s'%(v,t))
             spiking = True
             has_spiked = True
             if last_min_loc >0:
@@ -271,7 +276,11 @@ def max_min_simple(a,times,delta=0,peak_threshold=0.0):
 
     return turning_points
 
-def max_min(a,t,delta=0,peak_threshold=0.0):
+def max_min(a, 
+            t,
+            delta=0,
+            peak_threshold=0.0,
+            verbose = False):
     """
     Find the maxima and minima of a voltage trace.
 
@@ -293,7 +302,7 @@ def max_min(a,t,delta=0,peak_threshold=0.0):
        something which should be implemented.
 
     """
-    #print("Calculating max_min of a: (%s,...,%s)#%i, t: (%s,...,%s)#%i; thresh %s, delta %s"%(a[0],a[-1],len(a),t[0],t[-1],len(t), peak_threshold, delta))
+    if verbose: print("Calculating max_min of a: (%s,...,%s)#%i, t: (%s,...,%s)#%i; thresh %s, delta %s"%(a[0],a[-1],len(a),t[0],t[-1],len(t), peak_threshold, delta))
     gradients = np.diff(a)
 
     maxima_info = []
@@ -358,6 +367,7 @@ def max_min(a,t,delta=0,peak_threshold=0.0):
 
     return turning_points
 
+'''  PG removing this...
 def max_min2(v,t,delta=0.1,peak_threshold=0.0,window_length=11):
     """
     Uses the max_min function but then does a second pass with
@@ -395,7 +405,7 @@ def max_min2(v,t,delta=0.1,peak_threshold=0.0,window_length=11):
     max_min_dict['maxima_number'] = len(max_min_dict['maxima_locations'])
     max_min_dict['minima_number'] = max_min_dict['maxima_number'] - 1
 
-    return max_min_dict
+    return max_min_dict'''
 
 def spike_frequencies(t):
     """
@@ -1110,6 +1120,8 @@ class IClampAnalysis(TraceAnalysis):
 
         #call the parent constructor to prepare the v,t vectors:
         super(IClampAnalysis,self).__init__(v,t,start_analysis,end_analysis)
+        
+        self.verbose = False
 
         if smooth_data == True:
             self.v = smooth(self.v,window_len=smoothing_window_len)
@@ -1130,10 +1142,14 @@ class IClampAnalysis(TraceAnalysis):
         else:
             peak_threshold = None
 
+        
         self.max_min_dictionary = max_min_method(self.v,
                                           self.t,
                                           self.delta,
-                                          peak_threshold = peak_threshold)
+                                          peak_threshold = peak_threshold,
+                                          verbose = self.verbose)
+        
+        if self.verbose: print('Max min dictionary calculated')
                                           
 
     __error_during_analysis = False #hacky way of doing this. TODO: fix
@@ -1240,6 +1256,8 @@ class IClampAnalysis(TraceAnalysis):
         else: 
             self.analysis_results = None
             logger.info('Data not suitable for analysis')
+            
+        if self.verbose: print('Analysis complete')
 
         return self.analysis_results
 
