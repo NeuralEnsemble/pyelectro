@@ -1356,6 +1356,10 @@ class NetworkAnalysis(object):
         
         for ref in self.volts.keys():
             max_min_dictionary=self.max_min_dictionaries[ref]
+            #print('Analysing data with %i maxima, %i minima %s'%(max_min_dictionary['maxima_number'], 
+            #                                                  max_min_dictionary['minima_number'],
+            #                                                  '(targets: %s)'%targets if targets else ''))
+            
             v = self.volts[ref]
             
             pre = '%s:'%(ref)
@@ -1412,7 +1416,7 @@ class NetworkAnalysis(object):
                     else:
                         logging.warning('spike_width_list does not have enough points for calculating spike_width_adaptation or spike_broadening: %s'%spike_width_list)
 
-                if targets==None or pre+'peak_decay_exponent' in targets or pre+'peak_decay_exponent' in targets:
+                if targets==None or pre+'peak_decay_exponent' in targets or pre+'spike_frequency_adaptation' in targets:
                     spike_frequency_list = spike_frequencies(max_min_dictionary['maxima_times'])
                     
                     if targets==None or pre+'peak_decay_exponent' in targets:
@@ -1424,12 +1428,11 @@ class NetworkAnalysis(object):
                 if targets==None or pre+'trough_decay_exponent' in targets:
                     analysis_results[pre+'trough_decay_exponent'] = three_spike_adaptation(max_min_dictionary['minima_times'],max_min_dictionary['minima_values'])
 
-
                 if targets==None or pre+'peak_linear_gradient' in targets:
                     analysis_results[pre+'peak_linear_gradient'] = linear_fit(max_min_dictionary["maxima_times"],max_min_dictionary["maxima_values"])
+                    
                 
-
-
+                
         self.analysis_results=analysis_results
 
         return self.analysis_results
