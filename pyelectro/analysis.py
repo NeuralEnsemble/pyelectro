@@ -1285,6 +1285,8 @@ class NetworkAnalysis(object):
                  smoothing_window_len=11):
 
         self.volts = volts
+        if not isinstance(self.volts, dict):
+            raise ValueError("NetworkAnalysis requires a dict of y values with reference vs. voltage trace")
         self.t = t
         
         if smooth_data == True:
@@ -1431,6 +1433,15 @@ class NetworkAnalysis(object):
                 if targets==None or pre+'peak_linear_gradient' in targets:
                     analysis_results[pre+'peak_linear_gradient'] = linear_fit(max_min_dictionary["maxima_times"],max_min_dictionary["maxima_values"])
                     
+            if targets==None or pre+'average_last_1percent' in targets:
+                num_points_to_ave = int(len(v)/100.0)
+                last_vs = v[len(v)-num_points_to_ave:]
+                ave = 0
+                for vv in last_vs: 
+                    ave+=vv 
+                ave = ave/len(last_vs)
+                #print("Getting average of last %i points (%s->%s) of all %i (%s->%s): %s"%(len(last_vs),last_vs[0],last_vs[-1],len(v),v[0],v[-1], ave))
+                analysis_results[pre+'average_last_1percent'] = ave
                 
                 
         self.analysis_results=analysis_results

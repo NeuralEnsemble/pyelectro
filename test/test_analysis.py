@@ -70,7 +70,8 @@ class TestAnalysis(unittest.TestCase):
         ys = [y,y]
         xs = [times[0], times[-1]]
         pylab.plot(xs, ys, 'k--') 
-
+        
+    
     def test_iclamp_analysis_data(self, show=False):
         
         print("- test_iclamp_analysis_data()")
@@ -144,8 +145,54 @@ class TestAnalysis(unittest.TestCase):
 
         if show:
             pylab.show()
-        
 
+    def test_net_analysis_data(self):
+        
+        print("- test_net_analysis_data()")
+        
+        analysis_var={'peak_delta':0,'baseline':0,'dvdt_threshold':0, 'peak_threshold':0}
+        
+        times, volts0 = self.get_real_data()
+        volts = {'v': volts0}
+        
+        max_min_methods = [analysis.max_min_simple]
+
+        for max_min_method in max_min_methods:
+            
+            print('--------------  Analysing with: %s in NetworkAnalysis'%max_min_method)
+            analysis_data=analysis.NetworkAnalysis(volts,
+                                               times,
+                                               analysis_var,
+                                               start_analysis=0,
+                                               end_analysis=1000,
+                                               smooth_data=False,
+                                               show_smoothed_data=False)
+
+            analysed = analysis_data.analyse()
+
+            pp.pprint(analysed)
+
+            test_data = \
+                {'v:average_last_1percent': -63.559740088571395,
+                'v:average_maximum': 20.332122777777784,
+                'v:average_minimum': -78.491198000000011,
+                'v:first_spike_time': 108.44,
+                'v:interspike_time_covar': 0.019741062134352557,
+                'v:max_peak_no': 18,
+                'v:mean_spike_frequency': 34.545824019508231,
+                'v:min_peak_no': 17,
+                'v:peak_decay_exponent': -0.064912249086890028,
+                'v:peak_linear_gradient': -0.0020092762353974025,
+                'v:spike_broadening': 1.0495985656104889,
+                'v:spike_frequency_adaptation': 0.015301587514290844,
+                'v:spike_width_adaptation': 0.0078514736435321177,
+                'v:trough_decay_exponent': 0.0043242589967645087,
+                'v:trough_phase_adaptation': 0.01048418950808087}
+
+            for key in analysed.keys():
+                self.assertAlmostEqual(analysed[key],test_data[key])
+
+        
 
     def test_max_min(self):
         
@@ -182,4 +229,5 @@ if __name__ == '__main__':
     import logging
     logging.basicConfig(level=logging.WARNING)
     ta = TestAnalysis()
-    ta.test_iclamp_analysis_data(True)
+    #ta.test_iclamp_analysis_data(True)
+    ta.test_net_analysis_data()
