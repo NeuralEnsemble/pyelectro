@@ -1366,6 +1366,16 @@ class NetworkAnalysis(object):
             
             pre = '%s:'%(ref)
             
+            max = -1 * sys.float_info.max
+            min = sys.float_info.max
+            for val in v:
+                if val > max: max = val
+                if val < min: min = val
+            if targets==None or pre+'maximum' in targets:
+                analysis_results[pre+'maximum'] = max
+            if targets==None or pre+'minimum' in targets:
+                analysis_results[pre+'minimum'] = min
+            
             if targets==None or pre+'min_peak_no' in targets:
                 analysis_results[pre+'min_peak_no'] = max_min_dictionary['minima_number']
                 
