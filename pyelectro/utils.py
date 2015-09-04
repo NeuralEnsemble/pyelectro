@@ -6,7 +6,6 @@ pp = pprint.PrettyPrinter(indent=4)
 
 from pyelectro import analysis
 
-
 def _add_horizontal_line(y, times):
     
     ys = [y,y]
@@ -39,9 +38,8 @@ def simple_iclamp_analysis(volts,
 
     analysed.analyse()
 
-    pp.pprint(analysed.analysis_results)
+    analysis.print_comment_v(pp.pformat(analysed.analysis_results))
     maxmin = analysed.max_min_dictionary
-    #pp.pprint(maxmin)
     
     if plot:
 
@@ -81,7 +79,8 @@ def simple_network_analysis(volts,
                            start_analysis = 0,
                            end_analysis = None,
                            plot=False, 
-                           show_plot_already = True):
+                           show_plot_already = True,
+                           verbose=False):
     
     if analysis_var == None:
         analysis_var={'peak_delta':0,
@@ -96,25 +95,27 @@ def simple_network_analysis(volts,
                                      start_analysis=start_analysis,
                                      end_analysis= end_analysis if end_analysis is not None else times[-1],
                                      smooth_data=False,
-                                     show_smoothed_data=False)
+                                     show_smoothed_data=False,
+                                     verbose=verbose)
                                      
 
     analysed.analyse()
 
-    pp.pprint(analysed.analysis_results)
-    #pp.pprint(maxmin)
+    analysis.print_comment_v(pp.pformat(analysed.analysis_results))
     
     if plot:
+        fig = pylab.figure()
+        fig.canvas.set_window_title("Data analysed (%i traces at %i time points): %s"%(len(volts.keys()),len(times), volts.keys()))
+
+        pylab.xlabel('Time (ms)')
+        pylab.ylabel('Voltage (mV)')
+        pylab.grid('on')
+            
         for vk in volts.keys():
             vs = volts[vk]
             maxmin = analysed.max_min_dictionaries[vk]
             pre = '%s:'%vk
-            fig = pylab.figure()
-            fig.canvas.set_window_title("%s: Data analysed (%i traces at %i time points)"%(vk, len(vs),len(times)))
-
-            pylab.xlabel('Time (ms)')
-            pylab.ylabel('Voltage (mV)')
-            pylab.grid('on')
+            
 
             if analysed.analysis_results:
                 if analysed.analysis_results.has_key(pre+'average_maximum'):

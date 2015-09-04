@@ -13,7 +13,6 @@ import logging
 import sys
 from scipy import interpolate
 import operator
-import itertools
 
 import pprint
     
@@ -21,6 +20,20 @@ pp = pprint.PrettyPrinter(indent=4)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+
+def print_comment_v(text):
+    print_comment(text, True)
+    
+    
+def print_comment(text, print_it=False):
+    
+    prefix = "pyelectro >>> "
+    if not isinstance(text, str): text = text.decode('ascii')
+    if print_it:
+        
+        print("%s%s"%(prefix, text.replace("\n", "\n"+prefix)))
+        
 
 def voltage_plot(t,v,title=None):
     """
@@ -195,7 +208,7 @@ def max_min_simple(a,
                    peak_threshold = 0.0,
                    verbose = False):
     
-    if verbose: print("Calculating max_min_simple of a: (%s,...,%s)#%i, t: (%s,...,%s)#%i; thresh %s, delta %s"%(a[0],a[-1],len(a),times[0],times[-1],len(times), peak_threshold, delta))
+    print_comment("Calculating max_min_simple of a: (%s,...,%s)#%i, t: (%s,...,%s)#%i; thresh %s, delta %s"%(a[0],a[-1],len(a),times[0],times[-1],len(times), peak_threshold, delta), verbose)
     
     maxima_locations = []
     maxima_number = 0
@@ -223,7 +236,7 @@ def max_min_simple(a,
         v = a[i]
         
         if not spiking and v>=peak_threshold:
-            if verbose: print('Spike of %s at %s'%(v,t))
+            print_comment('Spike of %s at %s'%(v,t),verbose)
             spiking = True
             has_spiked = True
             if last_min_loc >0:
@@ -302,7 +315,7 @@ def max_min(a,
        something which should be implemented.
 
     """
-    if verbose: print("Calculating max_min of a: (%s,...,%s)#%i, t: (%s,...,%s)#%i; thresh %s, delta %s"%(a[0],a[-1],len(a),t[0],t[-1],len(t), peak_threshold, delta))
+    print_comment("Calculating max_min of a: (%s,...,%s)#%i, t: (%s,...,%s)#%i; thresh %s, delta %s"%(a[0],a[-1],len(a),t[0],t[-1],len(t), peak_threshold, delta),verbose)
     gradients = np.diff(a)
 
     maxima_info = []
@@ -531,7 +544,7 @@ def single_spike_width(y,t,baseline):
     return width
 
 
-def spike_widths(y,t,baseline=0,delta=0):
+def spike_widths(y,t,max_min_dictionary,baseline=0,delta=0):
     """
     Find the widths of each spike at a fixed height in a train of spikes.
 
@@ -542,22 +555,16 @@ def spike_widths(y,t,baseline=0,delta=0):
 
     :param y: voltage trace (array) corresponding to the spike train
     :param t: time value array corresponding to y
+    :param max_min_dictionary: precalculated max_min_dictionary
     :param baseline: the height (voltage) where the width is to be measured.
 
     :return: width of spike at height defined by baseline
 
     """
 
-    #first get the max and min data:
-    max_min_dictionary=max_min(y,t,delta)
-    logger.debug('max_min_dictionary: %s' %max_min_dictionary)
-
     max_num=max_min_dictionary['maxima_number']
-    maxima_locations=max_min_dictionary['maxima_locations']
     maxima_times=max_min_dictionary['maxima_times']
     minima_locations=max_min_dictionary['minima_locations']
-    maxima_values=max_min_dictionary['maxima_values']
-
 
     spike_widths=[]
     for i in range(max_num):
@@ -717,8 +724,6 @@ def ap_integrals(v,t):
     TODO:explain this fn
     """
 
-
-
     logger.info('Estimating AP indices')
     ap_indices = inflexion_spike_detector(v,t,indices=True)
     logger.info('AP indices found')
@@ -818,10 +823,10 @@ def load_csv_data(file_path, delimiter=',',plot=False):
 
         except:
             if warnings_left >0:
-                print('Row %i invalid in %s: %s, delimiter = [%s]'%(i, file_path, row, delimiter))
+                print_comment_v('Row %i invalid in %s: %s, delimiter = [%s]'%(i, file_path, row, delimiter))
                 warnings_left-=1
             elif warnings_left == 0:
-                print('Supressing further warnings about %s'%(file_path))
+                print_comment_v('Supressing further warnings about %s'%(file_path))
                 warnings_left-=1
 
         i+=1
@@ -981,11 +986,11 @@ def pptd_error(t_model,v_model,t_target,v_target,dvdt_threshold=None):
     #calculate the error:
     error=summed_matrix**2
 
-    print('pptd error:'+ error)
+    print_comment_v('pptd error:'+ error)
 
     return error
 
-def minima_phases(t,y,delta=0):
+def minima_phases(max_min_dictionary):
     """
     Find the phases of minima.
 
@@ -997,28 +1002,21 @@ def minima_phases(t,y,delta=0):
     It is very important to make sure the correct delta is specified for
     peak discrimination, otherwise unexpected results may be returned.
 
-    :param y: time-dependent variable (usually voltage)
-    :param t: time-vector
-    :param delta: the value by which a peak or trough has to exceed its
-        neighbours to be considered "outside of the noise"
+    :param max_min_dictionary: max_min_dictionary
 
     :return: phase of minimum relative to peaks.
 
     """
-    max_min_dictionary=max_min(y,t,delta)
 
     minima_num=max_min_dictionary['minima_number']
     maxima_times=max_min_dictionary['maxima_times']
     minima_times=max_min_dictionary['minima_times']
-    maxima_locations=max_min_dictionary['maxima_locations']
 
     minima_phases=[]
 
     for i in range(minima_num):
         maximum_0_t=maxima_times[i]
         maximum_1_t=maxima_times[i+1]
-        maximum_0_location=maxima_locations[i]
-        maximum_1_location=maxima_locations[i+1]
         minimum_time=minima_times[i]
         phase=(minimum_time-maximum_0_t)/(maximum_1_t-maximum_0_t)
         minima_phases.append(phase)
@@ -1116,12 +1114,13 @@ class IClampAnalysis(TraceAnalysis):
                  smooth_data=False,
                  show_smoothed_data=False,
                  smoothing_window_len=11,
-                 max_min_method=max_min):
+                 max_min_method=max_min,
+                 verbose=False):
 
         #call the parent constructor to prepare the v,t vectors:
         super(IClampAnalysis,self).__init__(v,t,start_analysis,end_analysis)
         
-        self.verbose = False
+        self.verbose = verbose
 
         if smooth_data == True:
             self.v = smooth(self.v,window_len=smoothing_window_len)
@@ -1149,7 +1148,7 @@ class IClampAnalysis(TraceAnalysis):
                                           peak_threshold = peak_threshold,
                                           verbose = self.verbose)
         
-        if self.verbose: print('Max min dictionary calculated')
+        print_comment('Max min dictionary calculated', verbose)
                                           
 
     __error_during_analysis = False #hacky way of doing this. TODO: fix
@@ -1158,19 +1157,19 @@ class IClampAnalysis(TraceAnalysis):
     def analysable_data(self):
         if self.max_min_dictionary['maxima_number'] < 3:
             analysable = False
-            print("Cannot analyse data: too few maxima (%i) in data: %s"%(self.max_min_dictionary['maxima_number'], self.max_min_dictionary))
+            print_comment_v("Cannot analyse data: too few maxima (%i) in data: %s"%(self.max_min_dictionary['maxima_number'], self.max_min_dictionary))
         elif max(self.v) > 100.0:
             analysable = False
-            print("Cannot analyse data: max of v (%f) >100"%max(self.v))
+            print_comment_v("Cannot analyse data: max of v (%f) >100"%max(self.v))
         elif min(self.v) > -5.0:
             analysable = False
-            print("Cannot analyse data: min of v (%f) > -5"%min(self.v))
+            print_comment_v("Cannot analyse data: min of v (%f) > -5"%min(self.v))
         elif max(self.v) < 10.0:
             analysable = False
-            print("Cannot analyse data: max of v (%f) < 10"%max(self.v))
+            print_comment_v("Cannot analyse data: max of v (%f) < 10"%max(self.v))
         elif self.__error_during_analysis:
             analysable = False
-            print("Cannot analyse data: error during analysis...")
+            print_comment_v("Cannot analyse data: error during analysis...")
         else:
             analysable = True
 
@@ -1215,14 +1214,15 @@ class IClampAnalysis(TraceAnalysis):
             analysis_results['mean_spike_frequency'] = mean_spike_frequency(max_min_dictionary['maxima_times'])
             analysis_results['interspike_time_covar'] = spike_covar(max_min_dictionary['maxima_times'])
             analysis_results['first_spike_time'] = max_min_dictionary['maxima_times'][0]
-            trough_phases=minima_phases(self.t,self.v,delta = self.delta)
+            
+            trough_phases=minima_phases(max_min_dictionary)
 
             try:
                 analysis_results['trough_phase_adaptation'] = exp_fit(trough_phases[0],trough_phases[1])
             except:
                 logging.warning('trough_phase_adaptation raising an error')
 
-            spike_width_list = spike_widths(self.v,self.t,self.baseline,self.delta)
+            spike_width_list = spike_widths(self.v,self.t,max_min_dictionary,self.baseline,self.delta)
 
             try:
                 analysis_results['spike_width_adaptation'] = exp_fit(spike_width_list[0],spike_width_list[1])
@@ -1248,7 +1248,7 @@ class IClampAnalysis(TraceAnalysis):
                                               t_experimental,v_experimental,
                                               dvdt_threshold=self.dvdt_threshold)
                 except:
-                    print('WARNING PPTD failure')
+                    print_comment_v('WARNING PPTD failure')
                     analysis_results['pptd_error'] = 1
 
             self.analysis_results=analysis_results
@@ -1257,7 +1257,7 @@ class IClampAnalysis(TraceAnalysis):
             self.analysis_results = None
             logger.info('Data not suitable for analysis')
             
-        if self.verbose: print('Analysis complete')
+        print_comment('Analysis complete',self.verbose)
 
         return self.analysis_results
 
@@ -1282,12 +1282,16 @@ class NetworkAnalysis(object):
                  end_analysis=None,
                  smooth_data=False,
                  show_smoothed_data=False,
-                 smoothing_window_len=11):
+                 smoothing_window_len=11,
+                 verbose=False):
 
         self.volts = volts
+        
         if not isinstance(self.volts, dict):
             raise ValueError("NetworkAnalysis requires a dict of y values with reference vs. voltage trace")
         self.t = t
+        
+        self.verbose=verbose
         
         if smooth_data == True:
             for ref in volts.keys():
@@ -1333,7 +1337,8 @@ class NetworkAnalysis(object):
             max_min_dict = max_min_simple(self.volts[ref],
                                    self.t,
                                    self.delta,
-                                   peak_threshold = peak_threshold)
+                                   peak_threshold = peak_threshold,
+                                   verbose=self.verbose)
                                    
             self.max_min_dictionaries[ref] = max_min_dict
 
@@ -1358,9 +1363,10 @@ class NetworkAnalysis(object):
         
         for ref in self.volts.keys():
             max_min_dictionary=self.max_min_dictionaries[ref]
-            #print('Analysing data with %i maxima, %i minima %s'%(max_min_dictionary['maxima_number'], 
-            #                                                  max_min_dictionary['minima_number'],
-            #                                                  '(targets: %s)'%targets if targets else ''))
+            
+            print_comment('Analysing data with %i maxima, %i minima %s'%(max_min_dictionary['maxima_number'], 
+                                                              max_min_dictionary['minima_number'],
+                                                              '(targets: %s)'%targets if targets else ''), self.verbose)
             
             v = self.volts[ref]
             
@@ -1375,6 +1381,7 @@ class NetworkAnalysis(object):
                 analysis_results[pre+'maximum'] = max
             if targets==None or pre+'minimum' in targets:
                 analysis_results[pre+'minimum'] = min
+            print_comment('Max: %s, min %s'%(max, min), self.verbose)    
             
             if targets==None or pre+'min_peak_no' in targets:
                 analysis_results[pre+'min_peak_no'] = max_min_dictionary['minima_number']
@@ -1404,17 +1411,16 @@ class NetworkAnalysis(object):
 
 
                 if targets==None or pre+'trough_phase_adaptation' in targets:
-                    trough_phases=minima_phases(self.t, v, delta = self.delta)
+                    trough_phases=minima_phases(max_min_dictionary)
 
                     try:
                         analysis_results[pre+'trough_phase_adaptation'] = exp_fit(trough_phases[0],trough_phases[1])
                     except:
                         logging.warning('trough_phase_adaptation raising an error')
 
-
                 if targets==None or pre+'spike_broadening' in targets or pre+'spike_width_adaptation' in targets:
 
-                    spike_width_list = spike_widths(v,self.t,self.baseline,self.delta)
+                    spike_width_list = spike_widths(v,self.t,max_min_dictionary,self.baseline,self.delta)
 
                     if len(spike_width_list)>=2 and len(spike_width_list[0])>0:
                         if targets==None or pre+'spike_broadening' in targets:
@@ -1442,7 +1448,7 @@ class NetworkAnalysis(object):
 
                 if targets==None or pre+'peak_linear_gradient' in targets:
                     analysis_results[pre+'peak_linear_gradient'] = linear_fit(max_min_dictionary["maxima_times"],max_min_dictionary["maxima_values"])
-                    
+
             if targets==None or pre+'average_last_1percent' in targets:
                 num_points_to_ave = int(len(v)/100.0)
                 last_vs = v[len(v)-num_points_to_ave:]
@@ -1450,7 +1456,7 @@ class NetworkAnalysis(object):
                 for vv in last_vs: 
                     ave+=vv 
                 ave = ave/len(last_vs)
-                #print("Getting average of last %i points (%s->%s) of all %i (%s->%s): %s"%(len(last_vs),last_vs[0],last_vs[-1],len(v),v[0],v[-1], ave))
+                print_comment("Getting average of last %i points (%s->%s) of all %i (%s->%s): %s"%(len(last_vs),last_vs[0],last_vs[-1],len(v),v[0],v[-1], ave), self.verbose)
                 analysis_results[pre+'average_last_1percent'] = ave
                 
                 
