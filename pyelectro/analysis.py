@@ -1459,6 +1459,16 @@ class NetworkAnalysis(object):
                 print_comment("Getting average of last %i points (%s->%s) of all %i (%s->%s): %s"%(len(last_vs),last_vs[0],last_vs[-1],len(v),v[0],v[-1], ave), self.verbose)
                 analysis_results[pre+'average_last_1percent'] = ave
                 
+            if targets!=None:
+                for t in targets:
+                    if t.startswith(pre+"value_"):
+                        target_time = float(t.split(':')[1].split('_')[1])
+                        i=0
+                        while self.t[i] < target_time:
+                            value = v[i]
+                            i+=1
+                        analysis_results[t] = value
+                
                 
         self.analysis_results=analysis_results
 

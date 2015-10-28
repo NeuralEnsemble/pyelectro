@@ -80,6 +80,7 @@ def simple_network_analysis(volts,
                            end_analysis = None,
                            plot=False, 
                            show_plot_already = True,
+                           targets=None,
                            verbose=False):
     
     if analysis_var == None:
@@ -99,7 +100,7 @@ def simple_network_analysis(volts,
                                      verbose=verbose)
                                      
 
-    analysed.analyse()
+    analysed.analyse(targets)
 
     analysis.print_comment_v(pp.pformat(analysed.analysis_results))
     
