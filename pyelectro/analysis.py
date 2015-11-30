@@ -1355,8 +1355,11 @@ class NetworkAnalysis(object):
         return index
 
         
-
-    def analyse(self, targets=None):
+    '''
+    targets: the standard targets to evaluate (min_peak_no, minimum, spike_broadening, etc). If None, evaluate all 
+    extra_targets: used if targets==None for specifying additional targets, e.g. cell0:value_100
+    '''
+    def analyse(self, targets=None, extra_targets=None):
         """ Analyses and puts all results into a dict"""    
 
         analysis_results = {}
@@ -1459,15 +1462,22 @@ class NetworkAnalysis(object):
                 print_comment("Getting average of last %i points (%s->%s) of all %i (%s->%s): %s"%(len(last_vs),last_vs[0],last_vs[-1],len(v),v[0],v[-1], ave), self.verbose)
                 analysis_results[pre+'average_last_1percent'] = ave
                 
-            if targets!=None:
-                for t in targets:
-                    if t.startswith(pre+"value_"):
-                        target_time = float(t.split(':')[1].split('_')[1])
-                        i=0
-                        while self.t[i] < target_time:
-                            value = v[i]
-                            i+=1
-                        analysis_results[t] = value
+            
+            other_targets = []
+            
+            if targets!=None: 
+                other_targets.extend(targets)
+            if extra_targets!=None: 
+                other_targets.extend(extra_targets)
+                
+            for t in other_targets:
+                if t.startswith(pre+"value_"):
+                    target_time = float(t.split(':')[1].split('_')[1])
+                    i=0
+                    while self.t[i] < target_time:
+                        value = v[i]
+                        i+=1
+                    analysis_results[t] = value
                 
                 
         self.analysis_results=analysis_results

@@ -168,7 +168,7 @@ class TestAnalysis(unittest.TestCase):
                                                smooth_data=False,
                                                show_smoothed_data=False)
 
-            analysed = analysis_data.analyse()
+            analysed = analysis_data.analyse(extra_targets=['v:value_10','v:value_100'])
 
             pp.pprint(analysed)
 
@@ -189,7 +189,9 @@ class TestAnalysis(unittest.TestCase):
                 'v:spike_frequency_adaptation': 0.015301587514290844,
                 'v:spike_width_adaptation': 0.0078514736435321177,
                 'v:trough_decay_exponent': 0.0043242589967645087,
-                'v:trough_phase_adaptation': 0.01048418950808087}
+                'v:trough_phase_adaptation': 0.01048418950808087,
+                'v:value_10': -63.498810000000006,
+                'v:value_100': -62.608369999999994}
 
             for key in analysed.keys():
                 self.assertAlmostEqual(analysed[key],test_data[key])
