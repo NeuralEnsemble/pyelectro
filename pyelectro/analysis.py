@@ -1483,18 +1483,22 @@ class NetworkAnalysis(object):
                     
                 # e.g. cell0:average_100_200 => average value between 100ms & 200ms
                 if target.startswith(pre+"average_"):
-                    start_time = float(target.split(':')[1].split('_')[1])
-                    end_time = float(target.split(':')[1].split('_')[2])
-                    
-                    average = 0
-                    num = 0
-                    for i in range(len(self.t)):
-                        if self.t[i] >= start_time and self.t[i] <= end_time:
-                            average += v[i]
-                            num+=1
-                    if num>0:        
-                        average = average/num
-                        analysis_results[target] = average
+                    try:
+                        start_time = float(target.split(':')[1].split('_')[1])
+                        end_time = float(target.split(':')[1].split('_')[2])
+
+                        average = 0
+                        num = 0
+                        for i in range(len(self.t)):
+                            if self.t[i] >= start_time and self.t[i] <= end_time:
+                                average += v[i]
+                                num+=1
+                        if num>0:        
+                            average = average/num
+                            analysis_results[target] = average
+                    except ValueError:
+                        # Ignoring as it could be average_last_1percent etc.
+                        pass
                 
                 
         self.analysis_results=analysis_results
