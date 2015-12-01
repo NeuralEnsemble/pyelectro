@@ -99,7 +99,7 @@ class TestAnalysis(unittest.TestCase):
             pp.pprint(analysed)
 
             test_data = \
-                {   'average_maximum': 20.332122777777784,
+                {'average_maximum': 20.332122777777784,
                 'average_minimum': -78.491198000000011,
                 'first_spike_time': 108.44,
                 'interspike_time_covar': 0.019741062134352557,
@@ -168,12 +168,14 @@ class TestAnalysis(unittest.TestCase):
                                                smooth_data=False,
                                                show_smoothed_data=False)
 
-            analysed = analysis_data.analyse(extra_targets=['v:value_10','v:value_100'])
+            analysed = analysis_data.analyse(extra_targets=['v:value_50','v:value_200','v:average_200_201','v:average_100_200'])
 
             pp.pprint(analysed)
 
             test_data = \
-                {'v:average_last_1percent': -63.559740088571395,
+                {'v:average_100_200': -55.34134969170771,
+                'v:average_200_201': -73.48867227722772,
+                'v:average_last_1percent': -63.559740088571395,
                 'v:average_maximum': 20.332122777777784,
                 'v:average_minimum': -78.491198000000011,
                 'v:first_spike_time': 108.44,
@@ -184,14 +186,14 @@ class TestAnalysis(unittest.TestCase):
                 'v:min_peak_no': 17,
                 'v:minimum': -79.47941999999999,
                 'v:peak_decay_exponent': -0.064912249086890028,
-                'v:peak_linear_gradient': -0.0020092762353974025,
+                'v:peak_linear_gradient': -0.0020092762353973994,
                 'v:spike_broadening': 1.0495985656104889,
-                'v:spike_frequency_adaptation': 0.015301587514290844,
-                'v:spike_width_adaptation': 0.0078514736435321177,
-                'v:trough_decay_exponent': 0.0043242589967645087,
-                'v:trough_phase_adaptation': 0.01048418950808087,
-                'v:value_10': -63.498810000000006,
-                'v:value_100': -62.608369999999994}
+                'v:spike_frequency_adaptation': 0.015301587514290829,
+                'v:spike_width_adaptation': 0.0078514736435321194,
+                'v:trough_decay_exponent': 0.0043242589967644922,
+                'v:trough_phase_adaptation': 0.010484189508080874,
+                'v:value_200': -75.04318,
+                'v:value_50': -62.48935}
 
             for key in analysed.keys():
                 self.assertAlmostEqual(analysed[key],test_data[key])
