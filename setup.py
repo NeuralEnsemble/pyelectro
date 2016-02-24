@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 
-from distutils.core import setup
+from setuptools import setup
+
+for line in open('pyelectro/__init__.py'):
+    if line.startswith("__version__"):
+        version = line.split("=")[1].strip()[1:-1]
 
 setup(
     name = "pyelectro",
-    version = '0.1.1dev',
+    version = version,
     packages = ['pyelectro'],
-    author = "Michael Vella",
-    author_email = "mv333@cam.ac.uk",
+    author = "Michael Vella, Padraig Gleeson",
+    author_email = "mv333@cam.ac.uk, p.gleeson@gmail.com",
     description = "A Python library for analysis of electrophysiological data",
     license = "BSD",
     url='https://github.com/vellamike/pyelectro',

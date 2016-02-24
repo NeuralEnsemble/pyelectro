@@ -5,6 +5,8 @@ IO operations, these are mostly specific to in-house formats used by Hugh Robins
 import scipy.io
 import numpy as np
 
+from pyelectro.analysis import print_comment_v
+
 def data_from_sweep(path):
     """Extract the trace from a MATLAB sweep file
     
@@ -52,7 +54,7 @@ def load_csv_data(file_path,plot=False):
             v.append(v_value)
 
         except:
-            print 'row ',i,' invalid'
+            print_comment_v('row ',i,' invalid')
 
         i+=1
 
@@ -65,3 +67,15 @@ def load_csv_data(file_path,plot=False):
         pyplot.show()
 
     return np.array(t), np.array(v)
+
+def summary(data, label=""):
+    if len(label)> 0: label = " (%s)"%label
+    info = "Data%s: "%label
+    if len(data)>4:
+        info+="%i points: [%f, %f, ..., %f]"%(len(data), data[0], data[1], data[-1])
+    elif len(data)>0:
+        info+="%i points: %s"%(len(data), data)
+    else:
+        info+="Empty data set"
+        
+    return info
