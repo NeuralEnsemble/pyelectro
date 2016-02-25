@@ -1,20 +1,21 @@
+
+sudo: false
+
+addons:
+  apt:
+    packages:
+    - python-numpy 
+    - python-scipy 
+    - nose
+    
 language: python
 
-python:
-  - "2.7"
-  #- "3.2"   # Should work, just need to generate correct py version for conda below from $TRAVIS_PYTHON_VERSION
+python: 2.7
 
+virtualenv:
+    system_site_packages: true
 
 install:
-  # Install conda
-  - sudo pip install conda
-  # install deps
-  - sudo conda init
-  #####- sudo conda update conda --yes
-  - deps='pip numpy scipy nose'
-  - conda create -p $HOME/py --yes $deps "python=$TRAVIS_PYTHON_VERSION"
-  - export PATH=$HOME/py/bin:$PATH
-  # install your own package into the environment
   - python setup.py install
 
 # command to run tests
