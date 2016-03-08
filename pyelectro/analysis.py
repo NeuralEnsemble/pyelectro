@@ -326,7 +326,7 @@ def max_min(a,
     for i in gradients[:-1]:
         count+=1
 
-        if ((cmp(i,0)>0) & (cmp(gradients[count],0)<0) & (i != gradients[count])):
+        if i > 0 and gradients[count] < 0 and i != gradients[count]:
             #found a maximum
             maximum_value=a[count]
             maximum_location=count
@@ -356,9 +356,9 @@ def max_min(a,
     location_getter=operator.itemgetter(1)
     time_getter=operator.itemgetter(2)
 
-    maxima_locations=map(location_getter,maxima_info)
-    maxima_times=map(time_getter,maxima_info)
-    maxima_values=map(values_getter,maxima_info)
+    maxima_locations=list(map(location_getter,maxima_info))
+    maxima_times=list(map(time_getter,maxima_info))
+    maxima_values=list(map(values_getter,maxima_info))
 
     for i in range(maxima_num-1):
         maximum_0_location=maxima_locations[i]
@@ -371,9 +371,9 @@ def max_min(a,
 
         minima_info.append((minimum_value,minimum_location,minimum_time))
 
-    minima_locations=map(location_getter,minima_info)
-    minima_times=map(time_getter,minima_info)
-    minima_values=map(values_getter,minima_info)
+    minima_locations=list(map(location_getter,minima_info))
+    minima_times=list(map(time_getter,minima_info))
+    minima_values=list(map(values_getter,minima_info))
 
     #need to construct the dictionary here:
     turning_points = {'maxima_locations':maxima_locations,'minima_locations':minima_locations,'maxima_number':maxima_num,'minima_number':minima_num,'maxima_times':maxima_times,'minima_times':minima_times, 'maxima_values':maxima_values,'minima_values':minima_values}
