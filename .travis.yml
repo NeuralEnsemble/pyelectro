@@ -1,20 +1,22 @@
 sudo: false
 
-addons:
-  apt:
-    packages:
-    - python-numpy 
-    - python-scipy 
-    # Quick fix, requires matrix for addons...
-    - python3-numpy 
-    - python3-scipy 
-    
 language: python
 
-python: 
-  - "2.7"
-  - "3.2"
-
+matrix:
+  include:
+    - python: "2.7"
+        addons:
+          apt:
+            packages:
+            - python-numpy 
+            - python-scipy 
+    - python: "3.2"
+        addons:
+          apt:
+            packages:
+            - python3-numpy 
+            - python3-scipy 
+            
 virtualenv:
     system_site_packages: true
 
