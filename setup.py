@@ -14,7 +14,7 @@ setup(
     author_email = "mv333@cam.ac.uk, p.gleeson@gmail.com",
     description = "A Python library for analysis of electrophysiological data",
     license = "BSD",
-    url='https://github.com/vellamike/pyelectro',
+    url='https://github.com/NeuralEnsemble/pyelectro',
     classifiers = [
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',

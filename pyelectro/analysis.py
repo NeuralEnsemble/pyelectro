@@ -803,7 +803,7 @@ def load_csv_data(file_path, delimiter=',',plot=False):
     """
     import csv
 
-    csv_file=file(file_path, 'r')
+    csv_file= open(file_path, 'r')
     csv_reader=csv.reader(csv_file, delimiter=delimiter)
 
     v=[]
