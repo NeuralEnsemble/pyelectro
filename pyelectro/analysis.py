@@ -1009,12 +1009,13 @@ def minima_phases(max_min_dictionary):
     """
 
     minima_num=max_min_dictionary['minima_number']
+    maxima_num=max_min_dictionary['maxima_number']
     maxima_times=max_min_dictionary['maxima_times']
     minima_times=max_min_dictionary['minima_times']
 
     minima_phases=[]
 
-    for i in range(minima_num):
+    for i in range(min(minima_num,maxima_num-1)):
         maximum_0_t=maxima_times[i]
         maximum_1_t=maxima_times[i+1]
         minimum_time=minima_times[i]
