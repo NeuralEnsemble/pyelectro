@@ -1314,7 +1314,7 @@ class NetworkAnalysis(object):
             end_analysis = t[-1]
             end_index=len(self.t)-1
         else:
-            end_index=len(self.t)
+            end_index=self.__nearest_index(self.t,end_analysis)
     
 
         if end_analysis!=None or start_analysis!=0:  
