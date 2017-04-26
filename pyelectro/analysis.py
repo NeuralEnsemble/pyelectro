@@ -1290,6 +1290,11 @@ class NetworkAnalysis(object):
         
         if not isinstance(self.volts, dict):
             raise ValueError("NetworkAnalysis requires a dict of y values with reference vs. voltage trace")
+        
+        for ref in self.volts.keys():
+            if not len(t)==len(self.volts[ref]):
+                raise ValueError("One of the voltage traces (%s) has a different length to the time trace (%s != %s)!"%(ref, len(self.volts[ref]), len(t)))
+                
         self.t = t
         
         self.verbose=verbose
