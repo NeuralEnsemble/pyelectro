@@ -22,13 +22,15 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def print_comment_v(text):
-    print_comment(text, True)
+def print_comment_v(text, warning=False):
+    print_comment(text, True, warning)
     
     
-def print_comment(text, print_it=False):
+def print_comment(text, print_it=False, warning=False):
     
     prefix = "pyelectro >>> "
+    if warning:
+        prefix += "WARNING "
     if not isinstance(text, str): text = text.decode('ascii')
     if print_it:
         
@@ -1256,7 +1258,7 @@ class IClampAnalysis(TraceAnalysis):
 
         else: 
             self.analysis_results = None
-            logger.info('Data not suitable for analysis')
+            print_comment_v('Data not suitable for analysis',True)
             
         print_comment('Analysis complete',self.verbose)
 
