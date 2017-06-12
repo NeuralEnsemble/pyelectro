@@ -112,7 +112,9 @@ class TestAnalysis(unittest.TestCase):
                 'spike_frequency_adaptation': 0.015301587514290844,
                 'spike_width_adaptation': 0.0078514736435321177,
                 'trough_decay_exponent': 0.0043242589967645087,
-                'trough_phase_adaptation': 0.01048418950808087}
+                'trough_phase_adaptation': 0.01048418950808087,
+                'max_interspike_time': 31.080000000000013,
+                'min_interspike_time': 28.70999999999998}
 
             for key in analysed.keys():
                 self.assertAlmostEqual(analysed[key],test_data[key])
@@ -193,7 +195,9 @@ class TestAnalysis(unittest.TestCase):
                 'v:trough_decay_exponent': 0.0043242589967644922,
                 'v:trough_phase_adaptation': 0.010484189508080874,
                 'v:value_200': -75.04318,
-                'v:value_50': -62.48935}
+                'v:value_50': -62.48935,
+                'v:max_interspike_time': 31.080000000000013,
+                'v:min_interspike_time': 28.70999999999998}
 
             for key in analysed.keys():
                 self.assertAlmostEqual(analysed[key],test_data[key])

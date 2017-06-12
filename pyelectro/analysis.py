@@ -439,6 +439,21 @@ def spike_frequencies(t):
     return [t[:-1],interspike_frequencies]
 
 
+def max_min_interspike_time(t):
+    """
+    Calculate the maximum & minimum interspike interval from the list of maxima times
+    
+    :param t: a list of spike times in ms
+    
+    :return: (max, min) interspike time
+    """
+    
+    spike_times=np.array(t)
+    interspike_times=np.diff(spike_times)
+    return max(interspike_times), min(interspike_times)
+    
+
+
 def mean_spike_frequency(t):
     """
     Find the average frequency of spikes
@@ -1218,6 +1233,10 @@ class IClampAnalysis(TraceAnalysis):
             analysis_results['interspike_time_covar'] = spike_covar(max_min_dictionary['maxima_times'])
             analysis_results['first_spike_time'] = max_min_dictionary['maxima_times'][0]
             
+            max_min_isi = max_min_interspike_time(max_min_dictionary['maxima_times'])
+            analysis_results['max_interspike_time'] = max_min_isi[0]
+            analysis_results['min_interspike_time'] = max_min_isi[1]
+            
             trough_phases=minima_phases(max_min_dictionary)
 
             try:
@@ -1444,6 +1463,14 @@ class NetworkAnalysis(object):
                                 logging.warning('spike_width_adaptation raising an exception, exp_fit looks problematic')
                     else:
                         logging.warning('spike_width_list does not have enough points for calculating spike_width_adaptation or spike_broadening: %s'%spike_width_list)
+                        
+
+                max_min_isi = max_min_interspike_time(max_min_dictionary['maxima_times'])
+                
+                if targets==None or pre+'max_interspike_time' in targets:
+                    analysis_results[pre+'max_interspike_time'] = max_min_isi[0]
+                if targets==None or pre+'min_interspike_time' in targets:
+                    analysis_results[pre+'min_interspike_time'] = max_min_isi[1]
 
                 if targets==None or pre+'peak_decay_exponent' in targets or pre+'spike_frequency_adaptation' in targets:
                     spike_frequency_list = spike_frequencies(max_min_dictionary['maxima_times'])
