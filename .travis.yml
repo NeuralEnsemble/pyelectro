@@ -5,9 +5,6 @@ addons:
     packages:
     - python-numpy 
     - python-scipy 
-    # Quick fix, requires matrix for addons...
-    - python3-numpy 
-    - python3-scipy 
     
 language: python
 
