@@ -1431,10 +1431,15 @@ class NetworkAnalysis(object):
                 if targets==None or pre+'average_minimum' in targets:
                     analysis_results[pre+'average_minimum'] = np.average(max_min_dictionary['minima_values'])
             
-            if max_min_dictionary['maxima_number'] >= 3:
 
-                if targets==None or pre+'mean_spike_frequency' in targets:
+            if targets==None or pre+'mean_spike_frequency' in targets:
+                    
+                if max_min_dictionary['maxima_number'] >= 3:
                     analysis_results[pre+'mean_spike_frequency'] = mean_spike_frequency(max_min_dictionary['maxima_times'])
+                else:
+                    analysis_results[pre+'mean_spike_frequency'] = 0
+                
+            if max_min_dictionary['maxima_number'] >= 3:
                 
                 if targets==None or pre+'interspike_time_covar' in targets:
                     analysis_results[pre+'interspike_time_covar'] = spike_covar(max_min_dictionary['maxima_times'])
