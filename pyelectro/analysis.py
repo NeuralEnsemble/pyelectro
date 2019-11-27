@@ -104,7 +104,7 @@ def smooth(x,window_len=11,window='hanning'):
 
     y=np.convolve(w/w.sum(),s,mode='valid')
 
-    edge=window_len/2
+    edge=int(window_len/2)
     return y[edge:-edge]
 
 def linear_fit(t, y):
@@ -317,6 +317,9 @@ def max_min(a,
        something which should be implemented.
 
     """
+    if peak_threshold==None: 
+        import sys
+        peak_threshold = -1*sys.float_info.max
     print_comment("Calculating max_min of a: (%s,...,%s)#%i, t: (%s,...,%s)#%i; thresh %s, delta %s"%(a[0],a[-1],len(a),t[0],t[-1],len(t), peak_threshold, delta),verbose)
     gradients = np.diff(a)
 
