@@ -7,19 +7,19 @@ pp = pprint.PrettyPrinter(indent=4)
 from pyelectro import analysis
 
 def _add_horizontal_line(y, times):
-    
+
     ys = [y,y]
     xs = [times[0], times[-1]]
     pylab.plot(xs, ys, 'k--')
 
-def simple_iclamp_analysis(volts, 
-                           times, 
-                           analysis_var=None, 
+def simple_iclamp_analysis(volts,
+                           times,
+                           analysis_var=None,
                            start_analysis = 0,
                            end_analysis = None,
-                           plot=False, 
+                           plot=False,
                            show_plot_already = True):
-    
+
     if analysis_var == None:
         analysis_var={'peak_delta':0,
                       'baseline':0,
@@ -34,13 +34,13 @@ def simple_iclamp_analysis(volts,
                                      smooth_data=False,
                                      show_smoothed_data=False,
                                      max_min_method=analysis.max_min_simple)
-                                     
+
 
     analysed.analyse()
 
     analysis.print_comment_v(pp.pformat(analysed.analysis_results))
     maxmin = analysed.max_min_dictionary
-    
+
     if plot:
 
         fig = pylab.figure()
@@ -49,12 +49,12 @@ def simple_iclamp_analysis(volts,
         pylab.xlabel('Time (ms)')
         pylab.ylabel('Voltage (mV)')
         pylab.grid('on')
-    
+
         if analysed.analysis_results:
-            if analysed.analysis_results.has_key('average_maximum'):
+            if 'average_maximum' in analysed.analysis_results:
                 _add_horizontal_line(analysed.analysis_results['average_maximum'], times)
 
-            if analysed.analysis_results.has_key('average_minimum'):
+            if 'average_minimum' in analysed.analysis_results:
                 _add_horizontal_line(analysed.analysis_results['average_minimum'], times)
 
         if maxmin:
@@ -69,27 +69,27 @@ def simple_iclamp_analysis(volts,
 
         if show_plot_already:
             pylab.show()
-            
+
     return analysed.analysis_results
 
 
-def simple_network_analysis(volts, 
-                           times, 
-                           analysis_var=None, 
+def simple_network_analysis(volts,
+                           times,
+                           analysis_var=None,
                            start_analysis = 0,
                            end_analysis = None,
-                           plot=False, 
+                           plot=False,
                            show_plot_already = True,
                            targets=None,
                            extra_targets=None,
                            verbose=False):
-    
+
     if analysis_var == None:
         analysis_var={'peak_delta':0,
                       'baseline':0,
                       'dvdt_threshold':0,
                       'peak_threshold':0}
-                     
+
 
     analysed=analysis.NetworkAnalysis(volts,
                                      times,
@@ -99,12 +99,12 @@ def simple_network_analysis(volts,
                                      smooth_data=False,
                                      show_smoothed_data=False,
                                      verbose=verbose)
-                                     
+
 
     analysed.analyse(targets=targets, extra_targets=extra_targets)
 
     analysis.print_comment_v(pp.pformat(analysed.analysis_results))
-    
+
     if plot:
         fig = pylab.figure()
         fig.canvas.set_window_title("Data analysed (%i traces at %i time points): %s"%(len(volts.keys()),len(times), volts.keys()))
@@ -112,24 +112,24 @@ def simple_network_analysis(volts,
         pylab.xlabel('Time (ms)')
         pylab.ylabel('Voltage (mV)')
         pylab.grid('on')
-            
+
         for vk in volts.keys():
             vs = volts[vk]
             maxmin = analysed.max_min_dictionaries[vk]
             pre = '%s:'%vk
-            
+
 
             if analysed.analysis_results:
-                if analysed.analysis_results.has_key(pre+'average_maximum'):
+                if pre+'average_maximum' in analysed.analysis_results:
                     _add_horizontal_line(analysed.analysis_results[pre+'average_maximum'], times)
-                    
-                if analysed.analysis_results.has_key(pre+'maximum'):
+
+                if pre+'maximum' in analysed.analysis_results:
                     _add_horizontal_line(analysed.analysis_results[pre+'maximum'], times)
 
-                if analysed.analysis_results.has_key(pre+'average_minimum'):
+                if pre+'average_minimum' in analysed.analysis_results:
                     _add_horizontal_line(analysed.analysis_results[pre+'average_minimum'], times)
                     
-                if analysed.analysis_results.has_key(pre+'minimum'):
+                if pre+'minimum' in analysed.analysis_results:
                     _add_horizontal_line(analysed.analysis_results[pre+'minimum'], times)
 
             if maxmin:
@@ -144,5 +144,5 @@ def simple_network_analysis(volts,
 
         if show_plot_already:
             pylab.show()
-            
+
     return analysed.analysis_results
