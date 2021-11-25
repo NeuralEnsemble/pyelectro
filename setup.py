@@ -15,6 +15,7 @@ setup(
     description="A Python library for analysis of electrophysiological data",
     license="BSD",
     url="https://github.com/NeuralEnsemble/pyelectro",
+    install_requires=["numpy", "scipy", "matplotlib"],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Science/Research",
