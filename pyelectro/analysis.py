@@ -95,13 +95,13 @@ def smooth(x, window_len=11, window="hanning"):
     if window_len < 3:
         return x
 
-    if not window in ["flat", "hanning", "hamming", "bartlett", "blackman"]:
+    if window not in ["flat", "hanning", "hamming", "bartlett", "blackman"]:
         raise (
             ValueError,
             "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'",
         )
 
-    s = np.r_[x[window_len - 1 : 0 : -1], x, x[-1:-window_len:-1]]
+    s = np.r_[x[(window_len - 1):0:-1], x, x[-1:-window_len:-1]]
     if window == "flat":  # moving average
         w = np.ones(window_len, "d")
     else:
@@ -322,7 +322,7 @@ def max_min(a, t, delta=0, peak_threshold=0.0, verbose=False):
        something which should be implemented.
 
     """
-    if peak_threshold == None:
+    if peak_threshold is None:
         import sys
 
         peak_threshold = -1 * sys.float_info.max
@@ -435,7 +435,7 @@ def max_min2(v,t,delta=0.1,peak_threshold=0.0,window_length=11):
     mask_filter = lambda l, mask : list(itertools.compress(l,mask))
 
     max_min_dict.pop('maxima_number',None)
-    max_min_dict.pop('minima_number',None)    
+    max_min_dict.pop('minima_number',None)
 
     dict_keys = max_min_dict.keys()
 
@@ -564,7 +564,7 @@ def single_spike_width(y, t, baseline):
             )
 
             if location < 0:
-                raise MathsError("Baseline does not intersect spike")
+                raise ValueError("Baseline does not intersect spike")
 
         # now go right
         value = np.max(y)
@@ -581,7 +581,7 @@ def single_spike_width(y, t, baseline):
             )
 
             if location > len(y) - 1:
-                raise MathsError("Baseline does not intersect spike")
+                raise ValueError("Baseline does not intersect spike")
 
         width = interpolated_right_time - interpolated_left_time
 
@@ -726,7 +726,8 @@ def inflexion_spike_detector(
     # we now have the times and indices of all the AP initiations, need
     # to find the corresponding end indices
 
-    nearest_index = lambda value, arr: np.abs(arr - value).argmin()
+    def nearest_index(value, arr):
+        np.abs(arr - value).argmin()
 
     ap_indices = []
     ap_times = []
@@ -961,7 +962,7 @@ def pptd(t, y, bins=10, xyrange=None, dvdt_threshold=None, plot=False):
     # filter the phase space data
     phase_dvdt_new = []
     phase_v_new = []
-    if dvdt_threshold != None:
+    if dvdt_threshold is not None:
         i = 0
         for dvdt in phase_space[1]:
             if dvdt > dvdt_threshold:
@@ -971,11 +972,11 @@ def pptd(t, y, bins=10, xyrange=None, dvdt_threshold=None, plot=False):
         phase_space[1] = phase_dvdt_new
         phase_space[0] = phase_v_new
 
-    if xyrange != None:
+    if xyrange is not None:
         density_map = np.histogram2d(
             phase_space[1], phase_space[0], bins=bins, normed=False, weights=None
         )
-    elif xyrange == None:
+    elif xyrange is None:
         density_map = np.histogram2d(
             phase_space[1],
             phase_space[0],
@@ -1141,7 +1142,7 @@ class TraceAnalysis(object):
         start_index = self.__nearest_index(self.t, start_analysis)
         end_index = self.__nearest_index(self.t, end_analysis)
 
-        if end_analysis != None or start_analysis != 0:
+        if end_analysis is not None or start_analysis != 0:
             self.v = v[start_index:end_index]
             self.t = t[start_index:end_index]
 
@@ -1213,10 +1214,10 @@ class IClampAnalysis(TraceAnalysis):
 
         self.verbose = verbose
 
-        if smooth_data == True:
+        if smooth_data:
             self.v = smooth(self.v, window_len=smoothing_window_len)
 
-        if show_smoothed_data == True:
+        if show_smoothed_data:
             from matplotlib import pyplot as plt
 
             plt.plot(self.t, self.v)
@@ -1364,7 +1365,7 @@ class IClampAnalysis(TraceAnalysis):
             # analysis_results['broadening_index'] = broadening_index(self.v,self.t)
 
             # this line here is because PPTD needs to be compared directly with experimental data:
-            if self.target_data_path != None and len(self.target_data_path) > 0:
+            if self.target_data_path is not None and len(self.target_data_path) > 0:
                 t_experimental, v_experimental = load_csv_data(self.target_data_path)
                 try:
                     analysis_results["pptd_error"] = pptd_error(
@@ -1437,14 +1438,14 @@ class NetworkAnalysis(object):
 
         self.verbose = verbose
 
-        if smooth_data == True:
+        if smooth_data:
             for ref in volts.keys():
                 # TODO improve this craziness
                 self.volts[ref] = smooth(
                     np.array(self.volts[ref]), window_len=smoothing_window_len
                 ).tolist()
 
-            if show_smoothed_data == True:
+            if show_smoothed_data:
                 from matplotlib import pyplot as plt
 
                 for ref in volts.keys():
@@ -1460,7 +1461,7 @@ class NetworkAnalysis(object):
         else:
             end_index = self.__nearest_index(self.t, end_analysis)
 
-        if end_analysis != None or start_analysis != 0:
+        if end_analysis is not None or start_analysis != 0:
             self.t = t[start_index : end_index + 1]
             for ref in volts.keys():
                 self.volts[ref] = volts[ref][start_index : end_index + 1]
@@ -1495,13 +1496,12 @@ class NetworkAnalysis(object):
         index = np.nonzero(differences == min_difference)[0][0]
         return index
 
-    """
-    targets: the standard targets to evaluate (min_peak_no, minimum, spike_broadening, etc). If None, evaluate all 
-    extra_targets: used if targets==None for specifying additional targets, e.g. cell0:value_100
-    """
-
     def analyse(self, targets=None, extra_targets=None):
-        """ Analyses and puts all results into a dict"""
+        """Analyses and puts all results into a dict
+
+        :param targets: the standard targets to evaluate (min_peak_no, minimum, spike_broadening, etc). If None, evaluate all
+        :param extra_targets: used if targets==None for specifying additional targets, e.g. cell0:value_100
+        """
 
         analysis_results = {}
 
@@ -1529,41 +1529,41 @@ class NetworkAnalysis(object):
                     max = val
                 if val < min:
                     min = val
-            if targets == None or pre + "maximum" in targets:
+            if targets is None or pre + "maximum" in targets:
                 analysis_results[pre + "maximum"] = max
-            if targets == None or pre + "minimum" in targets:
+            if targets is None or pre + "minimum" in targets:
                 analysis_results[pre + "minimum"] = min
             print_comment("Max: %s, min %s" % (max, min), self.verbose)
 
-            if targets == None or pre + "min_peak_no" in targets:
+            if targets is None or pre + "min_peak_no" in targets:
                 analysis_results[pre + "min_peak_no"] = max_min_dictionary[
                     "minima_number"
                 ]
 
-            if targets == None or pre + "max_peak_no" in targets:
+            if targets is None or pre + "max_peak_no" in targets:
                 analysis_results[pre + "max_peak_no"] = max_min_dictionary[
                     "maxima_number"
                 ]
 
             if max_min_dictionary["maxima_number"] >= 1:
 
-                if targets == None or pre + "average_maximum" in targets:
+                if targets is None or pre + "average_maximum" in targets:
                     analysis_results[pre + "average_maximum"] = np.average(
                         max_min_dictionary["maxima_values"]
                     )
-                if targets == None or pre + "first_spike_time" in targets:
+                if targets is None or pre + "first_spike_time" in targets:
                     analysis_results[pre + "first_spike_time"] = max_min_dictionary[
                         "maxima_times"
                     ][0]
 
             if max_min_dictionary["minima_number"] >= 1:
 
-                if targets == None or pre + "average_minimum" in targets:
+                if targets is None or pre + "average_minimum" in targets:
                     analysis_results[pre + "average_minimum"] = np.average(
                         max_min_dictionary["minima_values"]
                     )
 
-            if targets == None or pre + "mean_spike_frequency" in targets:
+            if targets is None or pre + "mean_spike_frequency" in targets:
 
                 if max_min_dictionary["maxima_number"] >= 3:
                     analysis_results[
@@ -1574,12 +1574,12 @@ class NetworkAnalysis(object):
 
             if max_min_dictionary["maxima_number"] >= 3:
 
-                if targets == None or pre + "interspike_time_covar" in targets:
+                if targets is None or pre + "interspike_time_covar" in targets:
                     analysis_results[pre + "interspike_time_covar"] = spike_covar(
                         max_min_dictionary["maxima_times"]
                     )
 
-                if targets == None or pre + "trough_phase_adaptation" in targets:
+                if targets is None or pre + "trough_phase_adaptation" in targets:
                     trough_phases = minima_phases(max_min_dictionary)
 
                     try:
@@ -1590,7 +1590,7 @@ class NetworkAnalysis(object):
                         logging.warning("trough_phase_adaptation raising an error")
 
                 if (
-                    targets == None
+                    targets is None
                     or pre + "spike_broadening" in targets
                     or pre + "spike_width_adaptation" in targets
                 ):
@@ -1600,12 +1600,12 @@ class NetworkAnalysis(object):
                     )
 
                     if len(spike_width_list) >= 2 and len(spike_width_list[0]) > 0:
-                        if targets == None or pre + "spike_broadening" in targets:
+                        if targets is None or pre + "spike_broadening" in targets:
                             analysis_results[
                                 pre + "spike_broadening"
                             ] = spike_broadening(spike_width_list[1])
 
-                        if targets == None or pre + "spike_width_adaptation" in targets:
+                        if targets is None or pre + "spike_width_adaptation" in targets:
                             try:
                                 analysis_results[
                                     pre + "spike_width_adaptation"
@@ -1624,13 +1624,13 @@ class NetworkAnalysis(object):
                     max_min_dictionary["maxima_times"]
                 )
 
-                if targets == None or pre + "max_interspike_time" in targets:
+                if targets is None or pre + "max_interspike_time" in targets:
                     analysis_results[pre + "max_interspike_time"] = max_min_isi[0]
-                if targets == None or pre + "min_interspike_time" in targets:
+                if targets is None or pre + "min_interspike_time" in targets:
                     analysis_results[pre + "min_interspike_time"] = max_min_isi[1]
 
                 if (
-                    targets == None
+                    targets is None
                     or pre + "peak_decay_exponent" in targets
                     or pre + "spike_frequency_adaptation" in targets
                 ):
@@ -1638,7 +1638,7 @@ class NetworkAnalysis(object):
                         max_min_dictionary["maxima_times"]
                     )
 
-                    if targets == None or pre + "peak_decay_exponent" in targets:
+                    if targets is None or pre + "peak_decay_exponent" in targets:
                         analysis_results[
                             pre + "peak_decay_exponent"
                         ] = three_spike_adaptation(
@@ -1646,12 +1646,12 @@ class NetworkAnalysis(object):
                             max_min_dictionary["maxima_values"],
                         )
 
-                    if targets == None or pre + "spike_frequency_adaptation" in targets:
+                    if targets is None or pre + "spike_frequency_adaptation" in targets:
                         analysis_results[pre + "spike_frequency_adaptation"] = exp_fit(
                             spike_frequency_list[0], spike_frequency_list[1]
                         )
 
-                if targets == None or pre + "trough_decay_exponent" in targets:
+                if targets is None or pre + "trough_decay_exponent" in targets:
                     analysis_results[
                         pre + "trough_decay_exponent"
                     ] = three_spike_adaptation(
@@ -1659,13 +1659,13 @@ class NetworkAnalysis(object):
                         max_min_dictionary["minima_values"],
                     )
 
-                if targets == None or pre + "peak_linear_gradient" in targets:
+                if targets is None or pre + "peak_linear_gradient" in targets:
                     analysis_results[pre + "peak_linear_gradient"] = linear_fit(
                         max_min_dictionary["maxima_times"],
                         max_min_dictionary["maxima_values"],
                     )
 
-            if targets == None or pre + "average_last_1percent" in targets:
+            if targets is None or pre + "average_last_1percent" in targets:
                 num_points_to_ave = int(len(v) / 100.0)
                 last_vs = v[len(v) - num_points_to_ave :]
                 ave = 0
@@ -1681,9 +1681,9 @@ class NetworkAnalysis(object):
 
             other_targets = []
 
-            if targets != None:
+            if targets is not None:
                 other_targets.extend(targets)
-            if extra_targets != None:
+            if extra_targets is not None:
                 other_targets.extend(extra_targets)
 
             for target in other_targets:

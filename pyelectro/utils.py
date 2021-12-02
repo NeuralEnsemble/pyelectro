@@ -41,7 +41,7 @@ def simple_iclamp_analysis(
 
     :returns: dictionary of analysis results
     """
-    if analysis_var == None:
+    if analysis_var is None:
         analysis_var = {
             "peak_delta": 0,
             "baseline": 0,
@@ -134,7 +134,7 @@ def simple_network_analysis(
 
     """
 
-    if analysis_var == None:
+    if analysis_var is None:
         analysis_var = {
             "peak_delta": 0,
             "baseline": 0,
