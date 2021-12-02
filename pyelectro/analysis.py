@@ -2,7 +2,7 @@
 """
 Module for mathematical analysis of voltage traces from electrophysiology.
 
-AUTHOR: Mike Vella vellamike@gmail.com
+AUTHOR: Mike Vella
 
 """
 
@@ -1121,9 +1121,13 @@ class TraceAnalysis(object):
     Constructor for TraceAnalysis base class takes the following arguments:
 
     :param v: time-dependent variable (usually voltage)
+    :type v: iterable
     :param t: time-array (1-to-1 correspondence with v_array)
+    :type t: iterable
     :param start_analysis: time in v,t where analysis is to start
+    :type start_analysis: float
     :param end_analysis: time in v,t where analysis is to end
+    :type end_analysis: float
     """
 
     def __init__(self, v, t, start_analysis=0, end_analysis=None):
@@ -1389,11 +1393,16 @@ class NetworkAnalysis(object):
     """Analysis class for networks of spiking cells, mainly simulation data
 
     :param v: time-dependent variable (usually voltage)
+    :type v: iterable
     :param t: time-vector
+    :type t: iterable
     :param analysis_var: dictionary containing parameters to be used
         in analysis such as delta for peak detection
+    :type analysis_var: dict
     :param start_analysis: time t where analysis is to start
+    :type start_analysis: float
     :param end_analysis: time in t where analysis is to end
+    :type end_analysis: float
 
     """
 
