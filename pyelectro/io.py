@@ -1,8 +1,9 @@
 """
-IO operations, these are mostly specific to in-house formats used by Hugh Robinson's lab at Cambridge.
+IO operations, these are mostly specific to in-house formats used by Hugh
+Robinson's lab at Cambridge.
 """
 
-import scipy.io
+from scipy import io
 import numpy as np
 
 from pyelectro.analysis import print_comment_v
@@ -17,7 +18,7 @@ def data_from_sweep(path):
 
 
     """
-    mat = scipy.io.loadmat(path)
+    mat = io.loadmat(path)
     recording = mat["sweep_struct"]["data"]
     recording = np.array(recording)
     recording = recording[0][0][0]

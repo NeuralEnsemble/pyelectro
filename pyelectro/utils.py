@@ -1,10 +1,13 @@
-import matplotlib.pyplot as pylab
+"""Pyelectro utility functions.
 
+This module includes a set of utility functions to simplify common tasks.
+"""
+import matplotlib.pyplot as pylab
 import pprint
+from pyelectro import analysis
+
 
 pp = pprint.PrettyPrinter(indent=4)
-
-from pyelectro import analysis
 
 
 def _add_horizontal_line(y, times):
@@ -23,8 +26,22 @@ def simple_iclamp_analysis(
     plot=False,
     show_plot_already=True,
 ):
+    """
+    A utility function to quickly carry out a simple current clamp analysis
+    (IClampAnalysis).
 
-    if analysis_var == None:
+    :param v: time-dependent variable (usually voltage)
+    :type v: iterable
+    :param t: time-array (1-to-1 correspondence with v_array)
+    :type t: iterable
+    :param start_analysis: time in v,t where analysis is to start
+    :type start_analysis: float
+    :param end_analysis: time in v,t where analysis is to end
+    :type end_analysis: float
+
+    :returns: dictionary of analysis results
+    """
+    if analysis_var is None:
         analysis_var = {
             "peak_delta": 0,
             "baseline": 0,
@@ -51,7 +68,7 @@ def simple_iclamp_analysis(
     if plot:
 
         fig = pylab.figure()
-        fig.canvas.set_window_title(
+        pylab.get_current_fig_manager().set_window_title(
             "Data analysed (%i traces at %i time points)" % (len(volts), len(times))
         )
 
@@ -97,8 +114,27 @@ def simple_network_analysis(
     extra_targets=None,
     verbose=False,
 ):
+    """
+    A utility function to quickly carry out a simple network analysis
+    (IClampAnalysis).
 
-    if analysis_var == None:
+    :param v: time-dependent variable (usually voltage)
+    :type v: iterable
+    :param t: time-vector
+    :type t: iterable
+    :param analysis_var: dictionary containing parameters to be used
+        in analysis such as delta for peak detection
+    :type analysis_var: dict
+    :param start_analysis: time t where analysis is to start
+    :type start_analysis: float
+    :param end_analysis: time in t where analysis is to end
+    :type end_analysis: float
+
+    :returns: dictionary of analysis results
+
+    """
+
+    if analysis_var is None:
         analysis_var = {
             "peak_delta": 0,
             "baseline": 0,
