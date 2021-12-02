@@ -65,7 +65,7 @@ with open("../pyelectro/__init__.py") as f:
     lines = f.readlines()
 for l in lines:
     if l.startswith("__version__"):
-        version = l.split("'")[1]
+        version = l.split("\"")[1]
 
 # The full version, including alpha/beta/rc tags.
 release = version
