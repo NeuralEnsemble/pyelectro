@@ -5,3 +5,4 @@ build
 *.pyc
 *~
 /*en.sh
+doc/_build/
