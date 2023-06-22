@@ -1,5 +1,4 @@
-pyelectro
-=========
+# pyelectro
 
 [![GH Build](https://github.com/NeuralEnsemble/pyelectro/actions/workflows/ci.yml/badge.svg)](https://github.com/NeuralEnsemble/pyelectro/actions/workflows/ci.yml)
 [![Documentation Status](https://readthedocs.org/projects/pyelectro/badge/?version=latest)](https://pyelectro.readthedocs.io/en/latest/?badge=latest)
