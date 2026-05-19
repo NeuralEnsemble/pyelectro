@@ -5,6 +5,8 @@ on:
     branches: [ master, development, experimental ]
   pull_request:
     branches: [ master, development, experimental ]
+  schedule:
+    - cron: '0 3 1,15 * *'  # 3 am on 1st and 15th of each month
 
 jobs:
   build:
